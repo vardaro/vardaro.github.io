@@ -42,15 +42,20 @@ a:hover {
     color: #BC4966;
     /* border-bottom: 4px solid #BC4966; */
 }
-.dynamic-float a {
-    margin-right: 3rem;
-    font-size: 1.5rem;
+
+.info {
+    margin-left: 0 !important;
 }
 
 /* for the social media links at the top */
 .dynamic-float {
     float: right;
 }
+
+ul {
+    padding-left: 20px;
+    list-style-position: outside;
+  }
 
 @media (max-width: 550px) { 
     .dynamic-float {

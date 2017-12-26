@@ -46,7 +46,13 @@ a:hover {
 .info {
     margin-left: 0 !important;
 }
-
+.framed {
+    border: 2px solid #eee;
+}
+.button.button-primary.red {
+background-color: #BC4966;
+border-color: #BC4966;
+}
 /* for the social media links at the top */
 .dynamic-float {
     float: right;
@@ -62,5 +68,7 @@ ul {
         margin-top: 4rem;
         float: none;
     }
-
+    .button.button-primary.red {
+        margin-bottom: 3rem;
+    }
  }

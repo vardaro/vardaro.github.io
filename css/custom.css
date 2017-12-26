@@ -2,23 +2,35 @@
     height: 10em;
     padding-top: 5rem;
 }
-.img {
-    background-image: url('/images/desk.jpg');
-    background-size: cover;
-}
+
+/* delimits each section of the website with a red bar */
 .section {
     border-top: 1px solid #BC4966;
     padding: 4rem 0;
     margin-bottom: 0;
-
+}
+/* slightly larger than h4 */
+.section-header {
+    font-size: 1.7rem;
+}
+/* override skeleton.css margins on <p> and <h4> */
+.sub-header {
+    margin-bottom: 0;
 }
 
 .row {
     margin-top: 5rem;
-    margin-bottom: 5rem;
 }
+/* give the projects a bit more spacing on mobile */
+#projects > .row {
+    margin-bottom: 7rem;
+}
+
+/* prevents the second lines text on li to go under bullet */
 ul {
     font-size: 90%;
+    padding-left: 20px;
+    list-style-position: outside;
 }
 
 h4 {
@@ -27,17 +39,12 @@ h4 {
     letter-spacing: .2rem;
     font-weight: 600;
 }
-.section-header {
-    font-size: 1.7rem;
-}
-.sub-header {
-    margin-bottom: 0;
-}
+
+/* override anchor tags ugly defaults */
 a {
     text-decoration: none;
     color: #000000;
-    position: relative;
-    
+    position: relative; 
 }
 a:hover {
     outline-width: 0;
@@ -45,35 +52,67 @@ a:hover {
     /* border-bottom: 4px solid #BC4966; */
 }
 
+/* override left indentation */
 .info {
     margin-left: 0 !important;
 }
+
+/* light gray border around the images */
 .framed {
     border: 2px solid #eee;
 }
+
+/* for progress bar */
+.meter {
+    height: .4rem;
+    position: relative;
+    margin-bottom: 2rem;
+}
+label {
+    font-size: 1rem;
+    font-weight: normal;
+}
+.meter > span {
+    display: block;
+    height: 100%;
+    box-sizing: border-box;
+    background-color: #BC4966;
+    border-left: 1px solid #000000;
+}
+
+/* override skeleton.css button color */
 .button.button-primary.red {
 background-color: #BC4966;
 border-color: #BC4966;
 }
+
 /* for the social media links at the top */
+/* it floats right but when the screen gets small it */
+/* float: none; see media query below */
 .dynamic-float {
     float: right;
 }
-
-ul {
-    padding-left: 20px;
-    list-style-position: outside;
-  }
 
 @media (max-width: 550px) { 
     .dynamic-float {
         margin-top: 4rem;
         float: none;
     }
+
+    /* give buttons more room on mobile */
     .button.button-primary.red {
         margin-bottom: 3rem;
     }
     .top {
         height: 20rem;
     }
+ }
+
+ /* compensates for weird edge condition where my last name line breaks
+    and cause the NodeJS developer part to go under the red line
+ */
+ @media (max-width: 863px) and (min-width: 550px) {
+     #name {
+         font-size: 2.5rem;
+     }
  }

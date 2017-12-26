@@ -1,5 +1,5 @@
 .top {
-    height: 20em;
+    height: 10em;
     padding-top: 5rem;
 }
 .img {
@@ -12,13 +12,15 @@
     margin-bottom: 0;
 
 }
-.underline {
-    border-bottom: .5px solid #BC4966;
-    
+
+.row {
+    margin-top: 5rem;
+    margin-bottom: 5rem;
 }
 ul {
     font-size: 90%;
 }
+
 h4 {
     font-size: 1.4rem;
     text-transform: uppercase;
@@ -70,5 +72,8 @@ ul {
     }
     .button.button-primary.red {
         margin-bottom: 3rem;
+    }
+    .top {
+        height: 20rem;
     }
  }

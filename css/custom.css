@@ -1,3 +1,4 @@
+
 .top {
     height: 10em;
     padding-top: 5rem;
@@ -69,7 +70,7 @@ a:hover {
     margin-bottom: 2rem;
 }
 label {
-    font-size: 1rem;
+    font-size: 1.3rem;
     font-weight: normal;
 }
 .meter > span {
@@ -85,6 +86,11 @@ label {
 .button.button-primary.red {
 background-color: #BC4966;
 border-color: #BC4966;
+}
+
+/* make edu data smaller than 1.5 rems */
+#edu > .row > p {
+    font-size: 1.3rem;
 }
 
 /* for the social media links at the top */

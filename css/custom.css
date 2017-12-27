@@ -80,6 +80,7 @@ label {
     border-left: 1px solid #000000;
 }
 
+
 /* override skeleton.css button color */
 .button.button-primary.red {
 background-color: #BC4966;
@@ -105,6 +106,10 @@ border-color: #BC4966;
     }
     .top {
         height: 20rem;
+    }
+    /* give more space between languages and frameworks on mobile */
+    #frameworks {
+        margin-top: 4rem;
     }
  }
 

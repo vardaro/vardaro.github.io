@@ -1,6 +1,6 @@
 # vardaro.github.io
 personal website
 
-## To run
-`npm install -g browser-sync`
-`npm run dev`
+### To run
+1. `npm install -g browser-sync`
+2. `npm run dev`

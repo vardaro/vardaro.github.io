@@ -88,11 +88,13 @@ background-color: #BC4966;
 border-color: #BC4966;
 }
 
-/* make edu data smaller than 1.5 rems */
-#edu > .row > p {
-    font-size: 1.3rem;
+footer {
+    background-color: #757575;
 }
-
+footer > .container > .row {
+    color: #BDBDBD;
+    padding-top: 2rem;
+}
 /* for the social media links at the top */
 /* it floats right but when the screen gets small it */
 /* float: none; see media query below */

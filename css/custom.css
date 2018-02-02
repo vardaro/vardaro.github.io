@@ -1,4 +1,8 @@
 
+/*
+    colors
+    red: 
+*/
 .top {
     height: 10em;
     padding-top: 5rem;
@@ -10,6 +14,7 @@
     padding: 4rem 0;
     margin-bottom: 0;
 }
+
 /* slightly larger than h4 */
 .section-header {
     font-size: 1.7rem;
@@ -52,7 +57,10 @@ a:hover {
     color: #BC4966;
     /* border-bottom: 4px solid #BC4966; */
 }
-
+a .underline {
+    text-decoration: initial;
+    border-bottom: 1px solid #BC4966 !important;
+}
 /* override left indentation */
 .info {
     margin-left: 0 !important;
@@ -94,6 +102,8 @@ footer {
 footer > .container > .row {
     color: #BDBDBD;
     padding-top: 2rem;
+    padding-bottom: 2rem;
+    
 }
 /* for the social media links at the top */
 /* it floats right but when the screen gets small it */

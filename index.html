@@ -60,6 +60,19 @@
       </div>
     </div>
 
+    <!-- me -->
+    <!-- <div class="section">
+      <h4 class="section-header">About Me</h4>
+
+      <div class="row" style="margin-bottom: 2rem;">
+        <p class="text-justify: auto">
+          Hi I'm Anthony and I'm an engineering student, hackathoner, and Node developer. 
+          I'm eighteen years old and I'm currently a freshmen in pursuit of my undergraduate Computer Science degree at UTA.
+          Aside from coding, my other hobbies include anime, pokemon, and not getting laid.
+        </p>
+      </div>
+    </div> -->
+
     <!-- work -->
     <div class="section">
       <h4 class="section-header">Work Experience</h4>
@@ -151,13 +164,17 @@
         </div>
 
         <div class="one-half column">
-          <pre style="margin-top: 0; margin-bottom: 0;"><code>// triangle pattern in Mavscript
-mav itr = 20;
-for (mav a = 1; a <= itr; a++) {
-    for (mav b = 0; b < a; b++) {
-        blaze.neighf("*");
+          <pre style="margin-top: 0; margin-bottom: 0;"><code>// bubble sort in MavScript
+mav stampede arr = [5, 3, 7, 54, 53];
+mav len = arr.length();
+for (mav i = 0; i < len-1; i++) {
+    for (mav j = 0; j < len-i-1; j++) {
+        if (arr[j] > arr[j+1]) {
+            mav temp = arr[j];
+            arr[j] = arr[j+1];
+            arr[j+1] = temp;
+        }
     }
-    blaze.neigh(""); // line break
 }</code></pre>
         </div>
       </div>
@@ -334,23 +351,6 @@ for (mav a = 1; a <= itr; a++) {
     </div>
   </div>
 
-  <!-- <footer>
-    <div class="container">
-
-      <div class="row">
-        <div class="four columns">
-          <h3>About me</h3>
-          <p>
-            I'm 18 and I'm a freshmen Computer Science major at UTA 
-            with a fiery passion for anything that isn't CSS!
-          </p>
-        </div>
-        <div class="four columns">
-            <img style="border-radius: 50%"class="u-max-full-width framed" src="/images/me.jpg">    
-        </div>
-      </div>
-    </div>
-  </footer> -->
 
   <!-- End Document
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->

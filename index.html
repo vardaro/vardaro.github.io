@@ -40,182 +40,169 @@
 
   <!-- Primary Page Layout
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <div class="container">
-    <div class="top">
-      <div class="row">
-        <div class="one-half column">
-          <h3 id="name" class="sub-header">Anthony Vardaro</h3>
-          <p id="title" style="font-size: 90%">NodeJS Developer</p>
-        </div>
+  <div id="typed-strings">
+    <h1>Anthony Vardaro</h1>
+  </div>
 
-        <!-- links for github email and resume -->
+  <div class="top view">
+    <h1 id="typed-name"></h1>
+  </div>
+
+  <div class="view">
+
+    <section>
+      <h4 class="section-header">work experience</h4>
+      <div class="row">
+
+        <!-- lm -->
         <div class="one-half column">
-          <div class="dynamic-float">
-            <a style="margin-right: 3rem;" target="_blank" href="https://github.com/vardaro">Github</a>
-            <a style="margin-right: 3rem;" target="_blank" href="https://drive.google.com/file/d/1Ia8s3oxAIHTtMSVO2SC1r09cI6kOwVja/view?usp=sharing">Resume</a>
-            <a href="mailto:anthony.vardaro@mavs.uta.edu">Email</a>
+          <div class="card">
+            <img class="u-max-full-width" src="./images/military-raptor-jet-f-22-airplane-40753.jpeg">
+            <div class="card-body">
+              <h4 class="card-title">Lockheed Martin</h4>
+              <p class="card-text">
+                <p class="sub-header">Software Engineer Intern - Fort Worth, TX</p>
+                <p>Summer 2016 - Summer 2017 - Summer 2018</p>
+                <ul>
+                  <li>First high school student hired in EBS / AeroIT.</li>
+                  <li>Full-time developer on internal webapp supporting the F-35 cost reduction initiative.</li>
+                  <li>Automated web deployment provisioning on Lockheed Martin's servers.</li>
+                  <li>Project lead on
+                    <a target="_blank" href="https://aws.amazon.com/">AWS</a> study presented to Senior Vice President and other leadership.</li>
+                  <li>Guest speaker at CodeQuest 2017 and 2018
+                </ul>
+              </p>
+              <a class="button button-primary btn" target="_blank" href="https://www.lockheedmartin.com/us.html">Website</a>
+
+            </div>
+
           </div>
-
-        </div>
-      </div>
-    </div>
-
-    <!-- work -->
-    <div class="section">
-      <h4 class="section-header">Work Experience</h4>
-
-      <!-- lockheed martin -->
-      <div class="row" style="margin-bottom: 2rem;">
-        <h4 class="sub-header">
-          <a target="_blank" href="https://www.lockheedmartin.com/us.html">Lockheed Martin</a>
-        </h4>
-        <p class="sub-header">Software Engineer Intern - Fort Worth, TX</p>
-        <p>Summer 2016 - Summer 2017 - Summer 2018</p>
-
-
-        <ul>
-          <li>First high school student hired in EBS / AeroIT.</li>
-          <li>Full-time developer on internal webapp supporting the F-35 cost reduction initiative.</li>
-          <li>Automated web deployment provisioning on Lockheed Martin's servers.</li>
-          <li>Project lead on
-            <a target="_blank" href="https://aws.amazon.com/">AWS</a> study presented to Senior Vice President and other leadership.</li>
-          <li>Guest speaker at
-            <a target="_blank" href="https://www.lockheedmartin.com/us/who-we-are/community/codequest.html">CodeQuest 2017</a>.</li>
-        </ul>
-
-        <a class="button button-primary red" target="_blank" href="https://www.lockheedmartin.com/us.html">Website</a>
-
-      </div>
-
-      <!-- neu robotics -->
-      <div class="row" style="margin-bottom: 2rem;">
-        <h4 class="sub-header">
-          <a target="_blank" href="http://www.neuroboticsinc.io/">Neu Robotics</a>
-        </h4>
-        <p class="sub-header">Software Developer - Arlington, TX</p>
-        <p>November 2017 - Present</p>
-
-        <ul>
-          <li>ReactJS developer on AOX-D client app.</li>
-          <li>Developer on home website.
-          </li>
-        </ul>
-        <a class="button button-primary red" target="_blank" href="http://www.neuroboticsinc.io/">Website</a>
-
-      </div>
-    </div>
-
-    <!-- projects -->
-    <div class="section" id="projects">
-      <h4 class="section-header">Fun Projects!</h4>
-
-      <!-- venndr -->
-      <div class="row">
-        <h4 class="sub-header">Venndr</h4>
-        <p class="sub-header">Mongo / Node / Express / Vue</p>
-        <p>In development</p>
-
-
-        <div class="one-half column info">
-          <p>
-            Venndr is a web app designed to circumvent Application Tracking Systems (ATS). It extracts keywords from your resume and
-            compares them against keywords from job postings on recruitment sites and recommends companies whose criteria
-            best matches your skillset.
-          </p>
-
-          <a class="button button-primary red" target="_blank" href="https://github.com/vardaro/Venndr">Source Code</a>
-
         </div>
 
+        <!-- neu -->
         <div class="one-half column">
-          <img class="u-max-full-width framed" src="/images/venndr.JPG">
+          <div class="card">
+            <img class="u-max-full-width" src="./images/pexels-photo-442587.jpeg">
+            <div class="card-body">
+              <h4 class="card-title">NEU Robotics, Inc.</h4>
+              <p class="card-text">
+                <p class="sub-header">Software Developer - Arlington, TX</p>
+                <p>November 2017 - Present</p>
+                <ul>
+                  <li>ReactJS/Redux and NodeJS developer on AOX-D client web app.</li>
+                  <li>Developer on company website.</li>
+                </ul>
+              </p>
+              <a class="button button-primary btn" target="_blank" href="http://www.neuroboticsinc.io/">Website</a>
+
+            </div>
+
+          </div>
         </div>
       </div>
+    </section>
 
-      <!-- Mavscript -->
+    <section>
+      <h4 class="section-header">Fun Projects</h4>
       <div class="row">
-        <h4 class="sub-header">Mavscript</h4>
-        <p>Java</p>
 
-
-        <div class="one-half column info">
-          <p>
-            Mavscript is a UT Arlington themed programming language! It was written at HackUTA and took about 17 hours in total to complete.
-            Given the time contraints, it lacks the utility of a full programming language, but it's still capable of solving
-            FIZZBUZZ and other fun algorithms! I consider it to have a pretty rich API given how quickly it was thrown together.
-            Not to mention, it's also dependency free and dynamically typed!
-          </p>
-
-          <a class="button button-primary red" target="_blank" href="https://github.com/MavScript/MavScript">Source Code</a>
-
-        </div>
-
+        <!-- venndr -->
         <div class="one-half column">
-          <pre style="margin-top: 0; margin-bottom: 0;"><code>// triangle pattern in Mavscript
-mav itr = 20;
-for (mav a = 1; a <= itr; a++) {
-    for (mav b = 0; b < a; b++) {
-        blaze.neighf("*");
-    }
-    blaze.neigh(""); // line break
-}</code></pre>
-        </div>
-      </div>
+          <div class="card">
+            <img class="u-max-full-width" src="./images/pexels-photo.jpg">
+            <div class="card-body">
+              <h4 class="card-title">Venndr</h4>
+              <p class="card-text">
+                <p style="font-weight: bold" class="sub-header">Mongo / Node / Express / jQuery</p>
+                <p>
+                  Venndr is a web app designed to circumvent Application Tracking Systems (ATS). It extracts keywords from your resume and
+                  compares them against keywords from job postings on recruitment sites and recommends companies whose criteria
+                  best matches your skillset.
+                </p>
+              </p>
+              <a class="button button-primary btn" target="_blank" href="https://github.com/vardaro/Venndr">Source Code</a>
 
-      <!-- sneaker bot -->
-      <div class="row">
-        <h4 class="sub-header">Adidas Sneaker Bot</h4>
-        <p>Java / JavaScript / Selenium</p>
+            </div>
 
-        <div class="one-half column info">
-          <p>
-            It's a bot that listens for Adidas tweeting about releases or restocks of popular shoes and purchases them via web browser
-            automation.
-          </p>
-
-          <a class="button button-primary red" target="_blank" href="https://github.com/vardaro/Adidas-Sneaker-Bot">Source Code</a>
-
+          </div>
         </div>
 
+        <!-- neu -->
         <div class="one-half column">
-          <img class="u-max-full-width framed" src="/images/adidas.gif">
+          <div class="card">
+            <img class="u-max-full-width" src="./images/code.jpeg">
+            <div class="card-body">
+              <h4 class="card-title">MavScript</h4>
+              <p class="card-text">
+                <p style="font-weight: bold" class="sub-header">Java</p>
+                <p>
+                  Mavscript is a UT Arlington themed programming language! It was prototyped at HackUTA and I still maintain the code to this
+                  day. It lacks the utility of a full programming language, but it can still do bubble sort, fizzbuzz, and
+                  other simple algortithms. Not to mention, it's also dependency free and dynamically typed!
+                </p>
+              </p>
+              <a class="button button-primary btn" target="_blank" href="https://github.com/MavScript/MavScript">Source Code</a>
+
+            </div>
+
+          </div>
         </div>
       </div>
 
-
-      <!-- wingbot -->
       <div class="row">
-        <h4 class="sub-header">Pickup Line Bot</h4>
-        <p>Node / Express / Twilio</p>
 
-        <div class="one-half column info">
-          <p>
-            It's a bot that texts you pickup lines! Just text
-            <code>pls</code> to
-            <code>+1 (817) 760 2776</code> and within seconds it'll text back a killer pickup line for you to use! And if you're feeling extra lucky you
-            can even text it a girls name and it'll try to find a pickup line with her name! (this only works for very common
-            names)
-          </p>
+        <!-- venndr -->
+        <div class="one-half column">
+          <div class="card">
+            <img class="u-max-full-width" src="./images/sneakers.jpeg">
+            <div class="card-body">
+              <h4 class="card-title">Adidas Sneaker Bot</h4>
+              <p class="card-text">
+                <p style="font-weight: bold" class="sub-header">Java / JavaScript / Selenium</p>
+                <p>
+                  It's a bot that listens for Adidas tweeting about releases or restocks of popular shoes and purchases them via web browser
+                  automation. It listens to @adidasalerts on Twitter (via TwitterStream) for tweets, extracts the URL entity
+                  from said tweet, and then fires up chromedriver to purchase the sneaker instantly.
+                </p>
 
-          <a class="button button-primary red" target="_blank" href="https://github.com/vardaro/wingbot.js">Source Code</a>
+              </p>
+              <a class="button button-primary btn" target="_blank" href="https://github.com/vardaro/Adidas-Sneaker-Bot">Source Code</a>
 
+            </div>
+
+          </div>
         </div>
 
-        <div class="three columns">
-          <img class="u-max-full-width framed" src="/images/pls.PNG">
-        </div>
-      </div>
-    </div>
+        <!-- neu -->
+        <div class="one-half column">
+          <div class="card">
+            <img class="u-max-full-width" src="./images/phone.jpeg">
+            <div class="card-body">
+              <h4 class="card-title">SMS Pickup Line Bot</h4>
+              <p class="card-text">
+                <p style="font-weight: bold" class="sub-header">Node / Express / Twilio</p>
+                <p>
+                  It's a bot that texts you pickup lines! Just text
+                  <code>pls</code> to
+                  <code>+1 (817) 760 2776</code> and within seconds it'll text back a killer pickup line for you to use! And if you're feeling extra lucky
+                  you can even text it a girls name and it'll try to find a pickup line with her name! (this only works for
+                  very common names)
+                </p>
+              </p>
+              <a class="button button-primary btn" target="_blank" href="https://github.com/vardaro/vardaro.github.io">Source Code</a>
 
-    <!-- skills -->
-    <div class="section">
+            </div>
+
+          </div>
+        </div>
+
+    </section>
+
+    <section>
       <h4 class="section-header">Skillset</h4>
-
       <div class="row">
-
-        <!-- languages -->
         <div class="one-half column">
-          <h4>Languages</h4>
+          <h5>Languages</h5>
 
           <label>Java</label>
           <div class="meter">
@@ -246,7 +233,7 @@ for (mav a = 1; a <= itr; a++) {
 
         <!-- frameworks -->
         <div class="one-half column" id="frameworks">
-          <h4>Frameworks / Libraries</h4>
+          <h5>Frameworks / Libraries</h5>
 
           <label>Angular</label>
           <div class="meter">
@@ -276,84 +263,89 @@ for (mav a = 1; a <= itr; a++) {
         </div>
 
       </div>
+    </section>
+
+    <section>
+      <h4 class="section-header">education</h4>
+      <div class="row">
+
+        <div class="four columns">
+          <div class="card">
+            <img class="u-max-full-width" src="./images/erb.jpg">
+            <div class="card-body">
+              <h4 class="card-title">UTA</h4>
+              <p class="card-text">
+                <p class="card-text">
+                  <p class="sub-header">2017 - 2021 (C/O 2021)</p>
+                  <p>Freshmen Computer Science Major</p>
+                </p>
+              </p>
+              <a class="button button-primary btn" target="_blank" href="https://www.uta.edu/uta/">Website</a>
+
+            </div>
+
+          </div>
+        </div>
+
+        <div class="four columns">
+          <div class="card">
+            <img class="u-max-full-width" src="./images/ncta.jpg">
+            <div class="card-body">
+              <h4 class="card-title">NCTA</h4>
+              <p class="card-text">
+                <p class="sub-header">2016 - 2017 (C/O 2017)</p>
+                <p>Transferred from GHS during Junior year</p>
+              </p>
+              <a class="button button-primary btn" target="_blank" href="https://www.northcentraltexasacademy.org/">Website</a>
+
+            </div>
+
+          </div>
+        </div>
+        <div class="four columns">
+          <div class="card">
+            <img class="u-max-full-width" src="./images/ghs.png">
+            <div class="card-body">
+              <h4 class="card-title">GHS</h4>
+              <p class="card-text">
+                <p class="sub-header">2014 - 2016</p>
+                <p>Freshmen - Junior</p>
+              </p>
+              <a class="button button-primary btn" target="_blank" href="http://www.granburyisd.org/ghs">Website</a>
+
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
     </div>
 
-    <!-- education -->
-    <div class="section" id="edu">
-      <h4 class="section-header">Education</h4>
+    <footer>
+      <div class="container">
+        <div class="row">
+          <div class="four columns foot-col">
+            <a class="contact" target="_blank" href="https://github.com/vardaro">Github</a>
 
-      <!-- uta -->
-      <div class="row">
+          </div>
+          <div class="four columns foot-col">
+            <a class="contact" target="_blank" href="https://drive.google.com/file/d/1Ia8s3oxAIHTtMSVO2SC1r09cI6kOwVja/view?usp=sharing">resume</a>
 
-        <div class="one-half column info">
-          <h4>University of Texas at Arlington</h4>
-          <p class="sub-header">2017 - 2021 (C/O 2021)</p>
-          <p>Freshmen Computer Science Major</p>
-          <a class="button button-primary red" target="_blank" href="https://www.uta.edu/uta/">Website</a>
-        </div>
+          </div>
+          <div class="four columns foot-col">
+            <a class="contact" target="_blank" href="mailto:anthony.vardaro@mavs.uta.edu"">email</a>
 
-        <div class="four columns">
-          <img class="u-max-full-width framed" src="/images/erb.jpg">
-
-        </div>
-
-      </div>
-
-      <!-- ncta -->
-      <div class="row">
-        <div class="one-half column">
-          <h4>North Central Texas Academy</h4>
-          <p class="sub-header">2016 - 2017 (C/O 2017)</p>
-          <p>Transferred from Granbury High School during Junior year</p>
-          <a class="button button-primary red" target="_blank" href="https://www.northcentraltexasacademy.org/">Website</a>
-        </div>
-        <div class="four columns">
-          <img class="u-max-full-width framed" src="/images/ncta.jpg">
-
-        </div>
-
-
-      </div>
-
-      <!-- ghs -->
-      <div class="row">
-        <div class="one-half column">
-          <h4>Granbury High School</h4>
-          <p class="sub-header">2014 - 2016</p>
-          <p>Freshmen - Junior</p>
-          <a class="button button-primary red" target="_blank" href="http://www.granburyisd.org/ghs">Website</a>
-        </div>
-
-        <div class="four columns">
-          <img class="u-max-full-width framed" src="/images/ghs.png">
-
-        </div>
-
-
-      </div>
-    </div>
-  </div>
-
-  <!-- <footer>
-    <div class="container">
-
-      <div class="row">
-        <div class="four columns">
-          <h3>About me</h3>
-          <p>
-            I'm 18 and I'm a freshmen Computer Science major at UTA 
-            with a fiery passion for anything that isn't CSS!
-          </p>
-        </div>
-        <div class="four columns">
-            <img style="border-radius: 50%"class="u-max-full-width framed" src="/images/me.jpg">    
+          </div>
         </div>
       </div>
-    </div>
-  </footer> -->
-
-  <!-- End Document
+    </footer>
+    <!-- End Document
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
 </body>
+
+<script src="./node_modules/typed.js/lib/typed.min.js" type="text/javascript"></script>
+<script src="./js/main.js" type="text/javascript"></script>
 
 </html>

@@ -144,4 +144,7 @@ footer {
     .top h1 {
         font-size: 5vh;
     }
+    #frameworks {
+        margin-top: 3vh;
+    }
  }

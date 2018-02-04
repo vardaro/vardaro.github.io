@@ -13,7 +13,7 @@ html, body {
 }
 .top {
     padding-top: 30vh;
-    height: 70vh;
+    height: 65vh;
 }
 .top h1 {
     font-size: 8.5vw;
@@ -27,7 +27,10 @@ html, body {
     letter-spacing: .2rem;
     font-weight: 600;
 }
-
+section {
+    margin-top: 10vh;
+    margin-bottom: 15vh;
+}
 .card {
     border: 0;
     box-shadow: 0 2px 5px 0 rgba(0,0,0,.16), 0 2px 10px 0 rgba(0,0,0,.12);
@@ -39,6 +42,9 @@ html, body {
     min-width: 0;
     word-wrap: break-word;
     background-color: #212121;
+
+    margin-top: 3vh;
+    margin-bottom: 3vh;
 }
 .card img {
     border-radius: 2px 2px 0 0;
@@ -64,21 +70,45 @@ html, body {
     font-weight: 400;
     margin-bottom: 0;
 }
-
+.card-text > p {
+    margin-bottom: 0;
+}
 .sub-header {
     margin-bottom: 0;
 }
 /* prevents the second lines text on li to go under bullet */
 ul {
-    font-size: 90%;
-    padding-left: 20px;
-    list-style-position: outside;
+    /* padding-left: 20px; */
+    /* list-style-position: outside; */
+    list-style-type: none;
+    
+}
+
+/* for progress bar */
+.meter {
+    height: .4rem;
+    position: relative;
+    margin-bottom: 2rem;
+}
+label {
+    /* font-size: 1.3rem; */
+    font-weight: normal;
+}
+.meter > span {
+    display: block;
+    height: 100%;
+    box-sizing: border-box;
+    background-color: #c2b280;
+    border-left: 1px solid #000000;
 }
 
 /* override skeleton.css button color */
 .button.button-primary.btn {
-    background-color: #fff;
-    border-color: #fff;
+    background-color: #c2b280;
+    border-color: #c2b280;
+    color: #000;
+}
+code {
     color: #000;
 }
 
@@ -86,6 +116,7 @@ ul {
     .card-title {
         font-size: 3vh;
     }
+
     .section-header {
         font-size: 3vh;
     }

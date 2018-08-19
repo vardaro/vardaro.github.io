@@ -31,9 +31,15 @@ h2 {
     font-size: 2.4rem;
     /* letter-spacing: -.15rem;    */
 }
+.contact-link {
+    margin-right: 4rem;
+}
 .meta {
     margin-top: 1rem;
     margin-bottom: 1rem;
+}
+.copyright {
+    float: right;
 }
 a {color: #000;
 border-bottom: 1px solid #000;
@@ -93,4 +99,13 @@ ul {
         margin-bottom: inherit;
     }
 
+    .copyright {
+        display: block;
+        float: left;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+    #second-col {
+        margin-top: 4rem;
+    }
 }

@@ -1,152 +1,96 @@
-
-/*
-    colors
-    red: 
-*/
-html, body {
-    background-color: #212121;
-    color: #eee;
+body {
+    font-size: 1.4em;
+    line-height: 1.6;
+    font-weight: 300;
+    font-family: 'Montserrat', sans-serif;    
+    background-color: rgb(252, 251, 229);
+    color: #363030;    
+    letter-spacing: .1;
 }
-.view {
-    padding-left: 10%;
-    padding-right: 10%;
+h1 {
+    font-size: 3rem;
+    line-height: 1.6;
+    margin-top: 38rem;
+    margin-bottom: 12rem;
+    font-weight: bold; 
+    color:#000;
+    font-family: 'Montserrat', sans-serif;
+    
+    /* letter-spacing: -.15rem; */
 }
-.top {
-    padding-top: 30vh;
-    height: 65vh;
+#middle-row {
+    margin-top: 7rem;
+    margin-bottom: 7rem;
 }
-.top h1 {
-    font-size: 8.5vw;
+h2 {
+    font-size: 3rem;
+    line-height: 1.6;
+    font-weight: 700; 
+    color:#000;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 2.4rem;
+    /* letter-spacing: -.15rem;    */
 }
-.top p{
-    font-size: 3vw;
-}
-.section-header {
-    font-size: 4vw;
-    text-transform: uppercase;
-    letter-spacing: .2rem;
-    font-weight: 600;
-}
-section {
-    margin-top: 10vh;
-    margin-bottom: 15vh;
-}
-.card {
-    border: 0;
-    box-shadow: 0 2px 5px 0 rgba(0,0,0,.16), 0 2px 10px 0 rgba(0,0,0,.12);
-    font-weight: 400;
-    border-radius: .3rem;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    word-wrap: break-word;
-    background-color: #212121;
-
-    margin-top: 3vh;
-    margin-bottom: 3vh;
-}
-.card img {
-    border-radius: 2px 2px 0 0;
-}
-.card .card-body {
-    position: relative;
-    -webkit-box-flex: 1;
-    flex: 1 1 auto;
-    padding: 1.25rem;
-}
-.card-title {
+.meta {
+    margin-top: 1rem;
     margin-bottom: 1rem;
-    font-size: 3vw;
-    color: #fff;
-    text-transform: uppercase;
-    letter-spacing: .2rem;
-    font-weight: 600;
 }
-.card-text {
-    margin-bottom: 1rem;
-    font-size: .9rem;
-    color: #fff;
-    font-weight: 400;
-    margin-bottom: 0;
+a {color: #000;
+border-bottom: 1px solid #000;
+text-decoration: none;
 }
-.card-text > p {
-    margin-bottom: 0;
-}
-.sub-header {
-    margin-bottom: 0;
-}
-/* prevents the second lines text on li to go under bullet */
-ul {
-    /* padding-left: 20px; */
-    /* list-style-position: outside; */
-    list-style-type: none;
-    
-}
-
-/* for progress bar */
-.meter {
-    height: .8rem;
-    position: relative;
-    margin-bottom: 2rem;
-}
-label {
-    /* font-size: 1.3rem; */
-    font-weight: normal;
-}
-.meter > span {
-    display: block;
-    height: 100%;
-    box-sizing: border-box;
-    background-color: #c2b280;
-    border-left: 1px solid #000000;
-    border-radius: 5rem;
-    
-}
-
-/* override skeleton.css button color */
-.button.button-primary.btn {
-    background-color: #c2b280;
-    border-color: #c2b280;
+.divider {
+    margin-top: 10rem;
+    margin-bottom: 6rem;
     color: #000;
+    font-weight: bold;
+    border-width: 0;
+    border-top: 2px solid #000;
+    width: 60px;
+    text-align: left;
+    margin-left: 0;
 }
-code {
+a:hover {
     color: #000;
-}
-footer {
-    padding-top: 5rem;
-    padding-bottom: 5rem;
-    box-shadow: 0 2px 5px 0 rgba(0,0,0,.16), 0 2px 10px 0 rgba(0,0,0,.12);
-    
-}
-.foot-col {
-    text-align: center;
-    margin-top: 1.5rem;
-    margin-bottom: 2rem;
+    border-bottom: 1px solid #eee;
+    transition: .5s;
 }
 .contact {
-    font-size: 4rem;
-    color: #c2b280;
-    text-align: center;
-    text-decoration: none;
-    text-transform: uppercase;
-    letter-spacing: 4px;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
 }
-.contact:hover {
-    color: #eee;
+.container {
+  position: relative;
+  width: 100%;
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box; 
 }
-@media (max-width: 550px) { 
-    .card-title {
-        font-size: 3vh;
+
+ul {
+    margin: 0;
+  }
+  ul.dashed {
+    list-style-type: none;
+  }
+  ul.dashed > li {
+    text-indent: -5px;
+  }
+  ul.dashed > li:before {
+    content: "- ";
+    text-indent: -5px;
+  }
+
+  @media (max-width: 576px) {
+    h1 {
+        font-size: 2.4rem;
+        line-height: 1.2;
+        margin-top: 30rem;
+    }
+    #middle-row {
+        margin-top: inherit;
+        margin-bottom: inherit;
     }
 
-    .section-header {
-        font-size: 3vh;
-    }
-    .top h1 {
-        font-size: 5vh;
-    }
-    #frameworks {
-        margin-top: 3vh;
-    }
- }
+}

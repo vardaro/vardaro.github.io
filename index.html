@@ -17,6 +17,8 @@
   <!-- FONT
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+
 
   <!-- CSS
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
@@ -29,316 +31,165 @@
 
 <body>
 
-  <!-- Primary Page Layout
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <div id="typed-strings">
-    <h1>Anthony Vardaro</h1>
-  </div>
+  <div class="container">
 
-  <div class="top view">
-    <h1 id="typed-name"></h1>
-  </div>
-  <script>
-    new Typed('#typed-name', {
-      stringsElement: '#typed-strings',
-      typeSpeed: 50,
-      showCursor: false
-    });
-  </script>
-  <div class="view">
-
-    <section>
-      <h4 class="section-header">work experience</h4>
-      <div class="row">
-
-        <!-- lm -->
-        <div class="one-half column">
-          <div class="card">
-            <img class="u-max-full-width" src="./images/military-raptor-jet-f-22-airplane-40753.jpeg">
-            <div class="card-body">
-              <h4 class="card-title">Lockheed Martin</h4>
-              <p class="card-text">
-                <p class="sub-header">Software Engineer Intern - Fort Worth, TX</p>
-                <p>Summer 2016 - Summer 2017 - Summer 2018</p>
-                <ul>
-                  <li>First high school student hired in EBS / AeroIT.</li>
-                  <li>Full-time developer on internal webapp supporting the F-35 cost reduction initiative.</li>
-                  <li>Automated web deployment provisioning on Lockheed Martin's servers.</li>
-                  <li>Project lead on cloud computing study presented to Senior Vice President and other leadership.</li>
-                  <li>Guest speaker at CodeQuest 2017 and 2018
-                </ul>
-              </p>
-              <a class="button button-primary btn" target="_blank" href="https://www.lockheedmartin.com/us.html">Website</a>
-
-            </div>
-
-          </div>
-        </div>
-
-        <!-- neu -->
-        <div class="one-half column">
-          <div class="card">
-            <img class="u-max-full-width" src="./images/pexels-photo-442587.jpeg">
-            <div class="card-body">
-              <h4 class="card-title">NEU Robotics, Inc.</h4>
-              <p class="card-text">
-                <p class="sub-header">Software Developer - Arlington, TX</p>
-                <p>November 2017 - March 2018</p>
-                <ul>
-                  <li>React/Redux and Node developer on AOX-D client web app.</li>
-                  <li>Developer on company website.</li>
-                </ul>
-              </p>
-              <a class="button button-primary btn" target="_blank" href="http://www.neuroboticsinc.io/">Website</a>
-
-            </div>
-
-          </div>
-        </div>
+    <div class="row headline">
+      <div class="eight columns">
+        <h1>Welcome to my corner of the internet. I'm Anthony Vardaro—student, software engineer, hackathoner.</h1>
       </div>
-    </section>
-
-    <section>
-      <h4 class="section-header">Fun Projects</h4>
-      <div class="row">
-
-        <!-- venndr -->
-        <div class="one-half column">
-          <div class="card">
-            <img class="u-max-full-width" src="./images/pexels-photo.jpg">
-            <div class="card-body">
-              <h4 class="card-title">Venndr</h4>
-              <p class="card-text">
-                <p style="font-weight: bold" class="sub-header">Mongo / Node / Express / jQuery</p>
-                <p>
-                  Venndr is a web app designed to circumvent Application Tracking Systems (ATS). It extracts keywords from your resume and
-                  compares them against keywords from job postings on recruitment sites and recommends companies whose criteria
-                  best matches your skillset.
-                </p>
-              </p>
-              <a class="button button-primary btn" target="_blank" href="https://github.com/vardaro/Venndr">&lt; Code /&gt;</a>
-
-            </div>
-
-          </div>
+    </div>
+    <hr class="divider" />
+    <div class="row" id="site-body">
+      <div class="eight columns">
+        <h2>Lockheed Martin</h2>
+        <div class="meta">
+          <label>Software Engineer</label>
+          <div>May 2016 - Aug 2016, May 2017 - Aug 2017, May 2018 - Present</div>
         </div>
 
-        <!-- neu -->
-        <div class="one-half column">
-          <div class="card">
-            <img class="u-max-full-width" src="./images/code.jpeg">
-            <div class="card-body">
-              <h4 class="card-title">MavScript</h4>
-              <p class="card-text">
-                <p style="font-weight: bold" class="sub-header">Java</p>
-                <p>
-                  Mavscript is a UT Arlington themed programming language! It was prototyped at HackUTA and I still maintain the code
-                  to this day. It lacks the utility of a full programming language, but it can still do bubble sort,
-                  fizzbuzz, and other simple algortithms. Not to mention, it's also dependency free and dynamically typed!
-                </p>
-              </p>
-              <a class="button button-primary btn" target="_blank" href="https://github.com/MavScript/MavScript">&lt; Code /&gt;</a>
+        <ul class="dashed">
+          <li>First high school student hired in EBS / AeroIT.</li>
+          <li>Lead software engineer on the number one F-35, C-130 quality assurance initiative.</li>
+          <li>Guest speaker at CodeQuest every year since 2017.</li>
+          <li>Automated internal web deployments.</li>
+        </ul>
+      </div>
+    </div>
+    <hr class="divider" />
+    <div class="row">
+      <div class="six columns">
+        <h2>Venndr</h2>
+        <p>
+          Web app that analyzes the keywords in your resume in comparison to keywords in online job postings to provide insight on
+          open jobs whose criteria best aligns with your skillset. Implemented in Vue, Node, and Mongo.
+        </p>
 
-            </div>
-
-          </div>
-        </div>
+        <p>
+          See the code
+          <a target="_blank" href="https://github.com/vardaro/Venndr">here.</a>
+        </p>
       </div>
 
-      <div class="row">
-
-        <!-- venndr -->
-        <div class="one-half column">
-          <div class="card">
-            <img class="u-max-full-width" src="./images/sneakers.jpeg">
-            <div class="card-body">
-              <h4 class="card-title">Adidas Sneaker Bot</h4>
-              <p class="card-text">
-                <p style="font-weight: bold" class="sub-header">Java / JavaScript / Selenium</p>
-                <p>
-                  It's a bot that listens for Adidas tweeting about releases or restocks of popular shoes and purchases them via web browser
-                  automation. It listens to @adidasalerts on Twitter (via TwitterStream) for tweets, extracts the URL entity
-                  from said tweet, and then fires up chromedriver to purchase the sneaker instantly.
-                </p>
-
-              </p>
-              <a class="button button-primary btn" target="_blank" href="https://github.com/vardaro/Adidas-Sneaker-Bot">&lt; Code /&gt;</a>
-
-            </div>
-
-          </div>
-        </div>
-
-        <!-- neu -->
-        <div class="one-half column">
-          <div class="card">
-            <img class="u-max-full-width" src="./images/phone.jpeg">
-            <div class="card-body">
-              <h4 class="card-title">SMS Pickup Line Bot</h4>
-              <p class="card-text">
-                <p style="font-weight: bold" class="sub-header">Node / Express / Twilio</p>
-                <p>
-                  It's a bot that texts you pickup lines! Just text
-                  <code>pls</code> to
-                  <code>+1 (817) 760 2776</code>> and within seconds it'll text back a killer pickup line for you to use! And if you're feeling extra lucky
-                  you can even text it a girls name and it'll try to find a pickup line with her name! (this only works for
-                  very common names)
-                </p>
-              </p>
-              <a class="button button-primary btn" target="_blank" href="https://github.com/vardaro/wingbot.js">&lt; Code /&gt;</a>
-
-            </div>
-
-          </div>
-        </div>
-
-    </section>
-
-    <section>
-      <h4 class="section-header">Skillset</h4>
-      <div class="row">
-        <div class="one-half column">
-          <h5>Languages</h5>
-
-          <label>Java</label>
-          <div class="meter">
-            <span style="width: 57%"></span>
-          </div>
-
-          <label>C / C++</label>
-          <div class="meter">
-            <span style="width: 38%"></span>
-          </div>
-
-          <label>NodeJS / Client JS</label>
-          <div class="meter">
-            <span style="width: 68%"></span>
-          </div>
-
-          <label>HTML / CSS</label>
-          <div class="meter">
-            <span style="width: 45%"></span>
-          </div>
-
-          <label>SQL</label>
-          <div class="meter">
-            <span style="width: 23%"></span>
-          </div>
-
-        </div>
-
-        <!-- frameworks -->
-        <div class="one-half column" id="frameworks">
-          <h5>Frameworks / Libraries</h5>
-
-          <label>Angular</label>
-          <div class="meter">
-            <span style="width: 45%"></span>
-          </div>
-
-          <label>Express</label>
-          <div class="meter">
-            <span style="width: 58%"></span>
-          </div>
-
-          <label>React</label>
-          <div class="meter">
-            <span style="width: 20%"></span>
-          </div>
-
-          <label>Vue</label>
-          <div class="meter">
-            <span style="width: 48%"></span>
-          </div>
-
-          <label>jQuery</label>
-          <div class="meter">
-            <span style="width: 36%"></span>
-          </div>
-
-        </div>
-
+      <div class="six columns">
+        <h2>MavScript</h2>
+        <p>
+          Mavscript is a UTA themed programming language written in Java. Written at HackUTA. Dependency-free, dynamically-typed and
+          capable of handling Fizzbuzz, bubble sort, etc. The syntax is designed to reflect, and subtly make fun of UTA culture.
+        </p>
+        <p>
+          See the code
+          <a target="_blank" href="https://github.com/MavScript/MavScript">here.</a>
+        </p>
       </div>
-    </section>
-
-    <section>
-      <h4 class="section-header">education</h4>
-      <div class="row">
-
-        <div class="four columns">
-          <div class="card">
-            <img class="u-max-full-width" src="./images/erb.jpg">
-            <div class="card-body">
-              <h4 class="card-title">UTA</h4>
-              <p class="card-text">
-                <p class="card-text">
-                  <p class="sub-header">2017 - 2021 (C/O 2021)</p>
-                  <p>Freshmen Computer Science Major</p>
-                </p>
-              </p>
-              <a class="button button-primary btn" target="_blank" href="https://www.uta.edu/uta/">Website</a>
-
-            </div>
-
-          </div>
-        </div>
-
-        <div class="four columns">
-          <div class="card">
-            <img class="u-max-full-width" src="./images/ncta.jpg">
-            <div class="card-body">
-              <h4 class="card-title">NCTA</h4>
-              <p class="card-text">
-                <p class="sub-header">2016 - 2017 (C/O 2017)</p>
-                <p>Transferred from GHS during Junior year</p>
-              </p>
-              <a class="button button-primary btn" target="_blank" href="https://www.northcentraltexasacademy.org/">Website</a>
-
-            </div>
-
-          </div>
-        </div>
-        <div class="four columns">
-          <div class="card">
-            <img class="u-max-full-width" src="./images/ghs.png">
-            <div class="card-body">
-              <h4 class="card-title">GHS</h4>
-              <p class="card-text">
-                <p class="sub-header">2014 - 2016</p>
-                <p>Freshmen - Junior</p>
-              </p>
-              <a class="button button-primary btn" target="_blank" href="http://www.granburyisd.org/ghs">Website</a>
-
-            </div>
-
-          </div>
-        </div>
-
+    </div>
+    <div class="row" id="middle-row">
+      <div class="six columns">
+        <h2>SMS Pickup Lines</h2>
+        <p>
+          A bot that texts you pickup lines! Text
+          <code>smash</code> to
+          <code>+1 (817) 760-2776</code>. If you're feeling extra lucky you can also try sending it a girls name and it will attempt to find a pickup line
+          cleverly laced with her name as a cheeky pun. Written in Node. Great for Tinder.
+        </p>
+        <p>
+          See the code
+          <a target="_blank" href="https://github.com/vardaro/wingbot.js">here.</a>
+        </p>
       </div>
-    </section>
-
+      <div class="six columns">
+        <h2>Sneaker Bot</h2>
+        <p>
+          A bot I made for myself in high school to automatically purchase hyped shoes off Adidas.com. It listens for tweets relating
+          to restock or release announcements for shoes, and purchases the shoe via Java Selenium. Adidas has since patched
+          it, so it no longer works. I kind of grew out NMDs anyway.
+        </p>
+        <p>
+          See the code
+          <a target="_blank" href="https://github.com/vardaro/Adidas-Sneaker-Bot">here.</a>
+        </p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="six columns">
+        <h2>Dank</h2>
+        <p>
+          A dank meme programming language I wrote at HackUTD 2018. Believe it or not, I actually won an award for this! What's even
+          funnier is that the award I was given, was for building something that would encourage young student to engage
+          in programming.
+        </p>
+        <p>
+          See the code
+          <a target="_blank" href="https://github.com/vardaro/dank">here.</a>
+        </p>
+      </div>
+      <div class="six columns">
+        <h2>Rendezvous</h2>
+        <p>
+          Made for people who organize hackathons, it's an app that optimizes the bus pickup locations for participants based on CO2
+          emissions. Written in JS. It's essentially just a k-means implementation where k = (number of buses).
+        </p>
+        <p>
+          See the code
+          <a target="_blank" href="https://github.com/earthack/backend">here.</a>
+        </p>
+      </div>
     </div>
 
-    <footer>
-      <div class="container">
-        <div class="row">
-          <div class="four columns foot-col">
-            <a class="contact" target="_blank" href="https://github.com/vardaro">Github</a>
+    <hr class="divider" />
+    <h2>Expertise</h2>
 
-          </div>
-          <div class="four columns foot-col">
-            <a class="contact" target="_blank" href="https://drive.google.com/file/d/1tXximf0Yzl7WhaywIQKDLJXOFZqAnPoi/view?usp=sharing">resume</a>
+    <div class="row">
 
-          </div>
-          <div class="four columns foot-col">
-            <a class="contact" target="_blank" href="mailto:anthony.vardaro@mavs.uta.edu">email</a>
+      <div class="four columns">
 
-          </div>
-        </div>
+        <ul class="dashed">
+          <li>Java</li>
+          <li>C / C++</li>
+          <li>NodeJS / Client JS</li>
+          <li>HTML / CSS</li>
+          <li>SQL</li>
+          <li>C#</li>
+        </ul>
       </div>
-    </footer>
-    <!-- End Document
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+      <div class="four columns">
+        <ul class="dashed">
+          <li>Angular </li>
+          <li>AngularJS</li>
+          <li>Express</li>
+          <li>React (with Redux)</li>
+          <li>Vue (with Vuex)</li>
+          <li>ASP.NET</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr class="divider" />
+    <h2>Education</h2>
+    <div class="row">
+      <div class="four columns">
+        <label>UT Arlington</label>
+        <div>Computer Science</div>
+        <div>Fall 2017 - Spring 2018</div>
+      </div>
+    </div>
+
+    <!-- footer  -->
+    <hr style="margin-top: 10rem;margin-bottom: 0rem;">
+    <div class="row contact">
+      <div class="two columns">
+        <a class="contact" target="_blank" href="https://github.com/vardaro">Github</a>
+      </div>
+      <div class="two columns">
+        <a class="contact" target="_blank" href="https://drive.google.com/file/d/1tXximf0Yzl7WhaywIQKDLJXOFZqAnPoi/view?usp=sharing">Resume</a>
+      </div>
+
+      <div class="two columns">
+        <a class="contact" target="_blank" href="mailto:anthony.vardaro@mavs.uta.edu">Email</a>
+      </div>
+    </div>
+
+  </div>
+
 </body>
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111662471-1"></script>

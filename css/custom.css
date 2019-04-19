@@ -3,7 +3,7 @@ body {
     line-height: 1.6;
     font-weight: 300;
     font-family: 'Montserrat', sans-serif;    
-    background-color: rgb(252, 251, 229);
+    background-color: #FFD9D7;
     color: #363030;    
     letter-spacing: .1;
 }
@@ -110,6 +110,7 @@ ul {
     }
 }
 #my-name {
-    font-size: 3.5rem;
+    /* font-size: 3.5rem; */
+    padding: 1rem;
     letter-spacing: 3px;
 }

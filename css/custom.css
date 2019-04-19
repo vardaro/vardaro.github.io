@@ -10,7 +10,7 @@ body {
 h1 {
     font-size: 3rem;
     line-height: 1.6;
-    margin-top: 38rem;
+    margin-top: 43rem;
     margin-bottom: 12rem;
     font-weight: bold; 
     color:#000;
@@ -108,4 +108,8 @@ ul {
     #second-col {
         margin-top: 4rem;
     }
+}
+#my-name {
+    font-size: 3.5rem;
+    letter-spacing: 3px;
 }

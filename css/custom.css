@@ -1,20 +1,28 @@
+@font-face {
+    font-family: "PitchSans";
+    src: url("./PitchSansWeb-Medium.woff") format('woff');
+}
+
 body {
-    font-size: 1.4em;
-    line-height: 1.6;
-    font-weight: 300;
-    font-family: 'Montserrat', sans-serif;    
-    background-color: #EEE5E9;
-    color: #363030;    
-    letter-spacing: .1;
+    -webkit-font-smoothing: antialiased;
+
+    font-family: PitchSans;
+    font-weight: 400;
+    font-size: 16px;
+    letter-spacing: 0px;
+    /* line-height: 1.5625rem; */
+    font-size: 1.5rem;
+    
+    color: rgb(35, 31, 32);
 }
 h1 {
     font-size: 3rem;
     line-height: 1.6;
     margin-top: 43rem;
     margin-bottom: 12rem;
-    font-weight: bold; 
     color:#000;
-    font-family: 'Montserrat', sans-serif;
+    letter-spacing: 0px;    
+    font-family: PitchSans, sans-serif;
     
     /* letter-spacing: -.15rem; */
 }
@@ -25,9 +33,10 @@ h1 {
 h2 {
     font-size: 3rem;
     line-height: 1.6;
-    font-weight: 700; 
-    color:#000;
-    font-family: 'Montserrat', sans-serif;
+     color:#000;
+    letter-spacing: 0px;    
+    
+    font-family: PitchSans, sans-serif;
     font-size: 2.4rem;
     /* letter-spacing: -.15rem;    */
 }
@@ -65,28 +74,10 @@ a:hover {
     margin-top: 1.5rem;
     margin-bottom: 1.5rem;
 }
-.container {
-  position: relative;
-  width: 100%;
-  max-width: 1020px;
-  margin: 0 auto;
-  padding: 0 20px;
-  box-sizing: border-box; 
-}
 
-ul {
-    margin: 0;
-  }
-  ul.dashed {
-    list-style-type: none;
-  }
-  ul.dashed > li {
-    text-indent: -5px;
-  }
-  ul.dashed > li:before {
-    content: "- ";
-    text-indent: -5px;
-  }
+li {
+    list-style: none;
+}
 
   @media (max-width: 576px) {
     h1 {

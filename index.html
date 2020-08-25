@@ -1,195 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-
-  <!-- Basic Page Needs
+  <head>
+    <!-- Basic Page Needs
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <meta charset="utf-8">
-  <title>Anthony Vardaro</title>
-  <meta name="description" content="">
-  <meta name="author" content="">
+    <meta charset="utf-8" />
+    <title>Anthony Vardaro</title>
+    <meta name="description" content="" />
+    <meta name="author" content="" />
 
-  <!-- Mobile Specific Metas
+    <!-- Mobile Specific Metas
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- FONT
+    <!-- FONT
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
-  <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+    <link
+      href="//fonts.googleapis.com/css?family=Raleway:400,300,600"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Montserrat"
+      rel="stylesheet"
+    />
 
-
-  <!-- CSS
+    <!-- CSS
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link rel="stylesheet" href="css/normalize.css">
-  <link rel="stylesheet" href="css/skeleton.css">
-  <link rel="stylesheet" href="css/custom.css">
+    <link rel="stylesheet" href="css/normalize.css" />
+    <link rel="stylesheet" href="css/skeleton.css" />
+    <link rel="stylesheet" href="css/custom.css" />
+  </head>
 
-</head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <h1>Anthony Vardaro</h1>
+      </div>
 
-<body>
-
-  <div class="container">
-    <div class="row">
-      <h1>Anthony Vardaro</h1>
-    </div>
-    <hr class="divider" />
-    <div class="row" id="site-body">
-      <div class="nine columns">
-        <div class="meta">
-          <p><strong>Lockheed Martin</strong></p>
-          <div>May 2016 - Present</div>
+      <hr class="divider" />
+      <div class="row" id="site-body">
+        <div class="four columns">
+          <div class="meta">
+            <label>Lockheed Martin</label>
+            <div>May 2016 - Aug 2020</div>
+          </div>
         </div>
       </div>
+      <hr class="divider" />
+      <div class="row">
+        <div class="four columns">
+          <label>Univerity of Texas, Arlington</label>
+          <div>Computer Science</div>
+          <div>Fall 2017 - Present</div>
+        </div>
+      </div>
+
+      <!-- footer  -->
+      <hr class="divider" />
+
+      <hr style="margin-top: 4rem; margin-bottom: 0rem; bottom: 0;" />
+      <div class="contact">
+        <span class="contact-link">
+          <a target="_blank" href="https://github.com/vardaro">Github</a>
+        </span>
+        <span class="contact-link">
+          <a target="_blank" href="">Resume</a>
+        </span>
+
+        <span class="contact-link">
+          <a target="_blank" href="mailto:anthony.vardaro@mavs.uta.edu"
+            >Email</a
+          >
+        </span>
+        <span class="copyright">
+          © 2020 Anthony Vardaro.
+        </span>
+      </div>
+      
     </div>
-    <hr class="divider" />
-    <div class="row">
-      <div class="six columns">
-        <p><strong>Career Seeker</strong></p>
-        <p>
-          Web app that analyzes the keywords in your resume in comparison to keywords in online job postings to provide insight on
-          open jobs whose criteria best aligns with your skillset. Implemented in Vue, Node, and Mongo.
-        </p>
+  </body>
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script
+    async
+    src="https://www.googletagmanager.com/gtag/js?id=UA-111662471-1"
+  ></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
 
-        <p>
-          See the code
-          <a target="_blank" href="https://github.com/vardaro/Venndr">here.</a>
-        </p>
-      </div>
-
-      <div class="six columns">
-        <p><strong>MavScript</strong></p>
-        <p>
-          Mavscript is a UTA themed programming language written in Java. Written at HackUTA. Dependency-free, dynamically-typed and
-          capable of handling Fizzbuzz, bubble sort, etc. The syntax is designed to reflect UTA culture. 
-        </p>
-        <p>
-          See the code
-          <a target="_blank" href="https://github.com/MavScript/MavScript">here.</a>
-        </p>
-      </div>
-    </div>
-    <div class="row" id="middle-row">
-      <div class="six columns">
-        <p><strong>SMS Pickup Lines</strong></p>
-        <p>
-          A bot that texts you pickup lines. Text
-          <code>pls</code> to
-          <code>+1 (817) 760-2776</code>. The bot is essentially a Node API endpoint attached to a Twilio webhook. Upon request it randomly selects a pickup
-          line from either Reddit or Twitter.
-        </p>
-        <p>
-          See the code
-          <a target="_blank" href="https://github.com/vardaro/wingbot.js">here.</a>
-        </p>
-      </div>
-      <div class="six columns">
-        <p><strong>Sneaker Bot</strong></p>
-        <p>
-          A bot I made for myself in high school to automatically purchase hyped shoes off Adidas.com. It listens for tweets relating
-          to restock or release announcements for shoes, and purchases the shoe via Java Selenium. Adidas has since patched
-          it, so it no longer works.
-        </p>
-        <p>
-          See the code
-          <a target="_blank" href="https://github.com/vardaro/Adidas-Sneaker-Bot">here.</a>
-        </p>
-      </div>
-    </div>
-    <div class="row">
-      <div class="six columns">
-        <p><strong>Dank</strong></p>
-        <p>
-          A dank meme programming language I wrote at HackUTD 2018. It won 1st place for best hack to get young students interested
-          in programming.
-        </p>
-        <p>
-          See the code
-          <a target="_blank" href="https://github.com/vardaro/dank">here.</a>
-        </p>
-      </div>
-      <div class="six columns">
-        <p><strong>Rendezvous</strong></p>
-        <p>
-          Made for people who organize hackathons, it's an app that optimizes the bus pickup locations for participants based on CO2
-          emissions. Written in JS. It's essentially a k-means implementation where k = (number of buses), X and Y are
-          lattitude and longitude respectively.
-        </p>
-        <p>
-          See the code
-          <a target="_blank" href="https://github.com/earthack/backend">here.</a>
-        </p>
-      </div>
-    </div>
-
-    <hr class="divider" />
-    <p><strong>Skills</strong></p>
-
-    <div class="row">
-
-      <div class="four columns">
-
-        <ul class="dashed">
-          <li>Java</li>
-          <li>C, C++, C#</li>
-          <li>NodeJS, JS</li>
-          <li>HTML, CSS</li>
-          <li>SQL</li>
-        </ul>
-      </div>
-      <div class="four columns">
-        <ul class="dashed">
-          <li>Angular 6, AngularJS </li>
-              <li>Express</li>
-              <li>React, Redux</li>
-              <li>Vue, Vuex</li>
-              <li>ASP.NET</li>
-        </ul>
-      </div>
-    </div>
-
-    <hr class="divider" />
-    <p><strong>Education</strong></p>
-    <div class="row">
-      <div class="four columns">
-        <label>UT Arlington</label>
-        <div>Computer Science</div>
-        <div>Fall 2017 - Present</div>
-      </div>
-    </div>
-
-
-
-    <!-- footer  -->
-    <hr style="margin-top: 10rem;margin-bottom: 0rem;">
-    <div class="contact">
-      <span class="contact-link">
-        <a target="_blank" href="https://github.com/vardaro">Github</a>
-      </span>
-      <span class="contact-link">
-        <a target="_blank" href="">Resume</a>
-      </span>
-
-      <span class="contact-link">
-        <a target="_blank" href="mailto:anthony.vardaro@mavs.uta.edu">Email</a>
-      </span>
-      <span class="copyright">
-        © 2018 Anthony Vardaro.
-      </span>
-    </div>
-
-  </div>
-
-</body>
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-111662471-1"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag() { dataLayer.push(arguments); }
-  gtag('js', new Date());
-
-  gtag('config', 'UA-111662471-1');
-</script>
-
+    gtag("config", "UA-111662471-1");
+  </script>
 </html>

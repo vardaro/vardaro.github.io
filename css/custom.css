@@ -18,8 +18,7 @@ body {
 h1 {
     font-size: 3rem;
     line-height: 1.6;
-    margin-top: 43rem;
-    margin-bottom: 12rem;
+    margin-top: 16rem;
     color:#000;
     letter-spacing: 0px;    
     font-family: PitchSans, sans-serif;
@@ -55,13 +54,13 @@ border-bottom: 1px solid #000;
 text-decoration: none;
 }
 .divider {
-    margin-top: 10rem;
-    margin-bottom: 6rem;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
     color: #000;
     font-weight: bold;
     border-width: 0;
     border-top: 2px solid #000;
-    width: 60px;
+    width: 0px;
     text-align: left;
     margin-left: 0;
 }
@@ -83,7 +82,7 @@ li {
     h1 {
         font-size: 2.4rem;
         line-height: 1.2;
-        margin-top: 30rem;
+        /* margin-top: 30rem; */
     }
     #middle-row {
         margin-top: inherit;
@@ -105,3 +104,4 @@ li {
     padding: 1rem;
     letter-spacing: 3px;
 }
+

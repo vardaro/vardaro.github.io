@@ -50,9 +50,9 @@ a {
     margin-left: 0;
 }
 
-.divider-wide {
-    margin-top: 4rem;
-    margin-bottom: 4rem;
+.divider-thin {
+    margin-top: .8rem;
+    margin-bottom: .8rem;
 }
 
 a:hover {

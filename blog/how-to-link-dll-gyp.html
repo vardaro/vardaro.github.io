@@ -22,6 +22,19 @@
   <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/highlight.min.js"></script>
   <script>hljs.initHighlightingOnLoad();</script>
 
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111662471-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
+
+    gtag("config", "UA-111662471-1");
+  </script>
+
 </head>
 
 <body>
@@ -36,7 +49,7 @@
         I was running into an issue linking a Windows-based C++ SDK to a <a
           href="https://www.npmjs.com/package/node-gyp/v/3.7.0">node-gyp</a> module. I wanted to wrap the SDK into a
         node-gyp addon and reference it from a Node process. Surprisingly, there is no documentation on getting node-gyp
-        to recognize DLLs at runtime. I decided to write my findings in hopes that I can save someone from a lot of
+        to recognize DLLs at runtime. I decided to write down my findings in hopes that I can save someone from a lot of
         Googling.
       </p>
       <p>
@@ -168,17 +181,5 @@
     </div>
   </div>
 </body>
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-111662471-1"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-
-  function gtag() {
-    dataLayer.push(arguments);
-  }
-  gtag("js", new Date());
-
-  gtag("config", "UA-111662471-1");
-</script>
 
 </html>

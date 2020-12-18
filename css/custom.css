@@ -82,4 +82,7 @@ a:hover {
         margin-top: .8rem;
         margin-bottom: .8rem;
     }
+    .contact-link {
+        margin-right: 2rem;
+    }
 }

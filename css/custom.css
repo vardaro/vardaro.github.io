@@ -13,7 +13,19 @@ body {
     color: rgb(35, 31, 32);
 }
 
-h1 {
+a {
+    color: #000;
+    border-bottom: 1px solid #000;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #000;
+    border-bottom: 1px solid #eee;
+    transition: .5s;
+}
+
+#home-name {
     font-size: 3rem;
     line-height: 1.6;
     margin-top: 16rem;
@@ -21,22 +33,20 @@ h1 {
     letter-spacing: 0px;
 }
 
-h2 {
+#home-title {
     font-size: 3rem;
     line-height: 1.6;
+    margin-top: 8rem;
     color: #000;
     letter-spacing: 0px;
-    font-size: 2.4rem;
 }
-
 .contact-link {
     margin-right: 4rem;
 }
 
-a {
-    color: #000;
-    border-bottom: 1px solid #000;
-    text-decoration: none;
+.contact {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .divider {
@@ -55,22 +65,16 @@ a {
     margin-bottom: .8rem;
 }
 
-a:hover {
-    color: #000;
-    border-bottom: 1px solid #eee;
-    transition: .5s;
-}
-
-.contact {
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
 @media (max-width: 576px) {
-    h1 {
+    #home-name {
         font-size: 2.4rem;
         line-height: 1.2;
         margin-top: 8rem;
+    }
+    #home-title {
+        font-size: 2rem;
+        line-height: 1.2;
+        margin-top: 5rem;
     }
     body {
         font-size: 13px;

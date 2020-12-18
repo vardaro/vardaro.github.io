@@ -34,11 +34,8 @@ a:hover {
 }
 
 #home-title {
-    font-size: 3rem;
-    line-height: 1.6;
     margin-top: 8rem;
     color: #000;
-    letter-spacing: 0px;
 }
 .contact-link {
     margin-right: 4rem;
@@ -72,16 +69,14 @@ a:hover {
         margin-top: 8rem;
     }
     #home-title {
-        font-size: 2rem;
-        line-height: 1.2;
         margin-top: 5rem;
     }
     body {
         font-size: 13px;
     }
     .divider {
-        margin-top: 3rem;
-        margin-bottom: 3rem;
+        /* margin-top: 3rem; */
+        /* margin-bottom: 3rem; */
     }
     .divider-thin {
         margin-top: .8rem;

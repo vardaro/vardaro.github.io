@@ -2,155 +2,151 @@
 <html lang="en">
 
 <head>
-  <!-- Basic Page Needs
+    <!-- Basic Page Needs
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <meta charset="utf-8" />
-  <title>How to Link C++ DLL, Header, and Lib Files to a Node-Gyp Addon</title>
-  <meta name="description" content="Anthony Vardaro, Software engineer" />
-  <meta name="author" content="Anthony Vardaro" />
+    <meta charset="utf-8" />
+    <title>How to Link C++ DLL, Header, and Lib Files to a Node-Gyp Addon</title>
+    <meta name="description" content="Anthony Vardaro, Software engineer" />
+    <meta name="author" content="Anthony Vardaro" />
 
-  <!-- Mobile Specific Metas
+    <!-- Mobile Specific Metas
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="canonical" href="https://www.anthonyvardaro.com/how-to-link-dll-gyp" />
 
-  <!-- CSS
+    <!-- CSS
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link rel="stylesheet" href="../css/normalize.css" />
-  <link rel="stylesheet" href="../css/skeleton.css" />
-  <link rel="stylesheet" href="../css/custom.css" />
-  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/styles/default.min.css">
-  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/highlight.min.js"></script>
-  <script>hljs.initHighlightingOnLoad();</script>
+    <link rel=" stylesheet " href="../css/normalize.css " />
+    <link rel="stylesheet " href="../css/skeleton.css " />
+    <link rel="stylesheet " href="../css/custom.css " />
+    <link rel="stylesheet " href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/styles/default.min.css ">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/highlight.min.js "></script>
+    <script>
+        hljs.initHighlightingOnLoad();
+    </script>
 
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111662471-1"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111662471-1 "></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
 
-    function gtag() {
-      dataLayer.push(arguments);
-    }
-    gtag("js", new Date());
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag("js ", new Date());
 
-    gtag("config", "UA-111662471-1");
-  </script>
+        gtag("config ", "UA-111662471-1 ");
+    </script>
 
 </head>
 
 <body>
-  <div class="container">
-    <div class="row">
-      <h3 id="home-title">How to Link C++ DLL, Header, and Lib Files to a Node-Gyp Addon</h3>
-      <p><a href="/">Anthony A. Vardaro</a>, Dec 2020</p>
-    </div>
-    <hr class="divider" />
-    <div class="row">
-      <p>
-        I was running into an issue linking a Windows-based C++ SDK to a <a
-          href="https://www.npmjs.com/package/node-gyp/v/3.7.0">node-gyp</a> module. I wanted to wrap the SDK into a
-        node-gyp addon and reference it from a Node process. Surprisingly, there is no documentation on getting node-gyp
-        to recognize DLLs at runtime. I decided to write down my findings in hopes that I can save someone from a lot of
-        Googling.
-      </p>
-      <p>
-        The <a href="https://developer.tobii.com/product-integration/interaction-library/">library I was working
-          with</a> came packaged with header files, DLLs, and .lib files that needed to be imported into my C++ addon.
-        You need to reference these files in your <code>binding.gyp</code> file, and also <strong>copy the DLLs to the
+    <div class="container ">
+        <div class="row ">
+            <h3 id="home-title ">How to Link C++ DLL, Header, and Lib Files to a Node-Gyp Addon</h3>
+            <p><a href="/ ">Anthony A. Vardaro</a>, Dec 2020</p>
+        </div>
+        <hr class="divider " />
+        <div class="row ">
+            <p>
+                I was running into an issue linking a Windows-based C++ SDK to a <a href="https://www.npmjs.com/package/node-gyp/v/3.7.0 ">node-gyp</a> module. I wanted to wrap the SDK into a node-gyp addon and reference it from a Node process. Surprisingly,
+                there is no documentation on getting node-gyp to recognize DLLs at runtime. I decided to write down my findings in hopes that I can save someone from a lot of Googling.
+            </p>
+            <p>
+                The <a href="https://developer.tobii.com/product-integration/interaction-library/ ">library I was working
+          with</a> came packaged with header files, DLLs, and .lib files that needed to be imported into my C++ addon. You need to reference these files in your <code>binding.gyp</code> file, and also <strong>copy the DLLs to the
           target build directory of your addon.</strong>
-      </p>
-    </div>
+            </p>
+        </div>
 
-    <hr class="divider" />
+        <hr class="divider " />
 
-    <div class="row">
-      <h5>Including the Header Files</h5>
-      <p>
-        You need to expose the directory containing your header files in your <code>binding.gyp</code>. For me, they are
-        within a subdirectory of my addon, so I can use the handy <code>module_root_dir</code> environment variable to
-        reference it.
-      </p>
-      <pre><code>
+        <div class="row ">
+            <h5>Including the Header Files</h5>
+            <p>
+                You need to expose the directory containing your header files in your <code>binding.gyp</code>. For me, they are within a subdirectory of my addon, so I can use the handy <code>module_root_dir</code> environment variable to reference it.
+            </p>
+            <pre><code>
 {
-    "include_dirs": [
-        "<(module_root_dir)/tobii/include"
+    "include_dirs ": [
+        "<(module_root_dir)/tobii/include "
     ],
 }
             </code></pre>
-    </div>
+        </div>
 
-    <hr class="divider" />
+        <hr class="divider " />
 
-    <div class="row">
-      <h5>Linking the .lib Files</h5>
-      <p>
-        You also need to tell node-gyp where it can find the .lib files in your library.
-      </p>
-      <pre><code>
+        <div class="row ">
+            <h5>Linking the .lib Files</h5>
+            <p>
+                You also need to tell node-gyp where it can find the .lib files in your library.
+            </p>
+            <pre><code>
 {
-    "libraries": [
-        "<(module_root_dir)/tobii/lib/x64/tobii_interaction_lib.lib",
-        "<(module_root_dir)/tobii/lib/x64/tobii_stream_engine.lib"
+    "libraries ": [
+        "<(module_root_dir)/tobii/lib/x64/tobii_interaction_lib.lib ",
+        "<(module_root_dir)/tobii/lib/x64/tobii_stream_engine.lib "
     ],
 }
             </code></pre>
-    </div>
+        </div>
 
-    <hr class="divider" />
+        <hr class="divider " />
 
-    <div class="row">
-      <h5>Copy the DLLs to Your Target Build Folder</h5>
-      <p>
-        Specify where the DLLs are, and where to copy them at build. In my case, I'm building to
-        <code>./build/Release/</code>. My <code>addon.node</code> target and both of my defined DLLs will be written to
-        this directory.
-      </p>
-      <pre><code>
+        <div class="row ">
+            <h5>Copy the DLLs to Your Target Build Folder</h5>
+            <p>
+                Specify where the DLLs are, and where to copy them at build. In my case, I'm building to
+                <code>./build/Release/</code>. My <code>addon.node</code> target and both of my defined DLLs will be written to this directory.
+            </p>
+            <pre><code>
 {
-    "copies": [
+    "copies ": [
         {
-        "destination": "<(module_root_dir)/build/Release/",
-            "files": [
-                "<(module_root_dir)/tobii/lib/x64/tobii_interaction_lib.dll",
-                "<(module_root_dir)/tobii/lib/x64/tobii_stream_engine.dll"
+        "destination ": "<(module_root_dir)/build/Release/ ",
+            "files ": [
+                "<(module_root_dir)/tobii/lib/x64/tobii_interaction_lib.dll ",
+                "<(module_root_dir)/tobii/lib/x64/tobii_stream_engine.dll "
             ]
         },
     ]
 }
             </code></pre>
-    </div>
+        </div>
 
-    <hr class="divider" />
+        <hr class="divider " />
 
-    <div class="row">
-      <h5>The Finished <code>binding.gyp</code></h5>
-      <p>
-        Here is final product of the <code>binding.gyp</code> file.
-      </p>
-      <pre><code>
+        <div class="row ">
+            <h5>The Finished <code>binding.gyp</code></h5>
+            <p>
+                Here is final product of the <code>binding.gyp</code> file.
+            </p>
+            <pre><code>
 {
-  "targets": [
+  "targets ": [
     {
-      "target_name": "addon",
-      "sources": [
-        "main.cc"
+      "target_name ": "addon ",
+      "sources ": [
+        "main.cc "
       ],
-      "conditions": [
+      "conditions ": [
         [
-          "OS==\"win\"",
+          "OS==\ "win\" ",
           {
-            "libraries": [
-              "<(module_root_dir)/tobii/lib/x64/tobii_interaction_lib.lib",
-              "<(module_root_dir)/tobii/lib/x64/tobii_stream_engine.lib"
+            "libraries ": [
+              "<(module_root_dir)/tobii/lib/x64/tobii_interaction_lib.lib ",
+              "<(module_root_dir)/tobii/lib/x64/tobii_stream_engine.lib "
             ],
-            "include_dirs": [
-              "<(module_root_dir)/tobii/include"
+            "include_dirs ": [
+              "<(module_root_dir)/tobii/include "
             ],
-            "copies": [
+            "copies ": [
               {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [
-                  "<(module_root_dir)/tobii/lib/x64/tobii_interaction_lib.dll",
-                  "<(module_root_dir)/tobii/lib/x64/tobii_stream_engine.dll"
+                "destination ": "<(module_root_dir)/build/Release/ ",
+                "files ": [
+                  "<(module_root_dir)/tobii/lib/x64/tobii_interaction_lib.dll ",
+                  "<(module_root_dir)/tobii/lib/x64/tobii_stream_engine.dll "
                 ]
               }
             ]
@@ -161,25 +157,25 @@
   ]
 }
             </code></pre>
-    </div>
+        </div>
 
-    <!-- footer  -->
-    <hr class="divider" />
-    <div class="contact">
-      <span class="contact-link">
-        <a target="_blank" href="https://github.com/vardaro">Github</a>
+        <!-- footer  -->
+        <hr class="divider " />
+        <div class="contact ">
+            <span class="contact-link ">
+        <a target="_blank " href="https://github.com/vardaro ">Github</a>
       </span>
-      <span class="contact-link">
-        <a target="_blank" href="mailto:vardaro@vardaro.me">Email</a>
+            <span class="contact-link ">
+        <a target="_blank " href="mailto:vardaro@vardaro.me ">Email</a>
       </span>
-      <span class="contact-link">
-        <a target="_blank" href="https://www.linkedin.com/in/anthony-vardaro-27a070138/">LinkedIn</a>
+            <span class="contact-link ">
+        <a target="_blank " href="https://www.linkedin.com/in/anthony-vardaro-27a070138/ ">LinkedIn</a>
       </span>
-      <span class="contact-link">
-        <a href="/blog">Blog</a>
+            <span class="contact-link ">
+        <a href="/blog ">Blog</a>
       </span>
+        </div>
     </div>
-  </div>
 </body>
 
 </html>

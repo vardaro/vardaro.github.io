@@ -74,10 +74,6 @@ a:hover {
     body {
         font-size: 13px;
     }
-    .divider {
-        /* margin-top: 3rem; */
-        /* margin-bottom: 3rem; */
-    }
     .divider-thin {
         margin-top: .8rem;
         margin-bottom: .8rem;

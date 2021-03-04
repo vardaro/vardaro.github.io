@@ -7,7 +7,6 @@ body {
     -webkit-font-smoothing: antialiased;
     font-family: PitchSans;
     font-weight: 400;
-    font-size: 16px;
     letter-spacing: 0px;
     font-size: 1.5rem;
     color: rgb(35, 31, 32);
@@ -26,7 +25,7 @@ a:hover {
 }
 
 #home-name {
-    font-size: 3rem;
+    font-size: 3.1rem;
     line-height: 1.6;
     margin-top: 16rem;
     color: #000;
@@ -37,6 +36,7 @@ a:hover {
     margin-top: 8rem;
     color: #000;
 }
+
 .contact-link {
     margin-right: 4rem;
 }
@@ -47,14 +47,17 @@ a:hover {
 }
 
 .divider {
-    margin-top: 2rem;
-    margin-bottom: 2rem;
     color: #000;
     font-weight: bold;
     border-width: 0;
     width: 0px;
     text-align: left;
     margin-left: 0;
+}
+
+.divider-section {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
 }
 
 .divider-thin {
@@ -74,9 +77,9 @@ a:hover {
     body {
         font-size: 13px;
     }
-    .divider-thin {
-        margin-top: .8rem;
-        margin-bottom: .8rem;
+    .divider-section {
+        margin-top: 2.1rem;
+        margin-bottom: 2.1rem;
     }
     .contact-link {
         margin-right: 2rem;

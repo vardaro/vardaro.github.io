@@ -8,8 +8,9 @@ body {
     font-family: 'Open Sans', sans-serif;;
     /*font-weight: 400;*/
     /*letter-spacing: 0px;*/
-    font-size: 1.1rem;
+    font-size: 1.3rem;
     color: rgb(35, 31, 32);
+    margin-bottom: 50px;
 }
 
 .section {

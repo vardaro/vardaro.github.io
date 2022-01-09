@@ -168,7 +168,7 @@ toolchain(
             </p>
 
             <p>
-            Now we can pass our runtime pair to a <code>toolchain</code> target. This target describes a toolchains compatible host and execution platforms, and it's toolchain type. The toolchain type is simply an alias for naming certain kinds of toolchains. You can implement your own <code>toolchain_type</code>, but the one that ships with Bazel is sufficient for us. 
+            Now we can pass our runtime pair to a <code>toolchain</code> target. This target describes a toolchains compatible host and execution platforms, and it's toolchain type. The toolchain type is simply an alias for naming certain kinds of toolchains. You can implement your own <code>toolchain_type</code>, but the one that ships with Bazel is sufficient for us. Again, we are taking advantage of string substitution to inject the compatible OS and CPU constraints.  
             </p>
 
             <p>
@@ -216,7 +216,7 @@ py_download(
             <p>
                Our rule doesn't do anything yet, let's give it some attributes.
             </p>
-            <pre><code class="language-python">
+            <pre><code class="language-python"> # internal/python_interpreter.bzl
 def _py_download(ctx):
     """
     Downloads a Python distribution and registers a toolchain.
@@ -259,9 +259,269 @@ py_download = repository_rule(
 )</pre></code>
             <p>
               We've created an attribute set for our users to describe their toolchain. All they need to do is provide our rule with a mirror URL, a digest, a target platform, and a target CPU, and our rule can handle the heavy lifting of generating the necessary toolchain bits.
-              You'll notice the rule comes with the private attributes <code>_interpreter_path</code> and <code>_build_tpl</code>. The <code>_interpreter_path</code> path describes the path to the Python interpreter binary. In most cases, it lives in <code>bin/python3</code>, hence the attributed privacy and default setting. The <code>_build_tpl</code> attribute describes the base template of the injected <code>BUILD.bazel</code>. We're writing our own, but let's give users the option to customize/patch what gets injected in the repository.
             </p>
+            <p>
+            The compatible OS platforms that this rule can support are restricted to <code>darwin</code>, <code>linux</code>, and <code>windows</code>. The compatible CPU architectures are restricted to <code>x86_64</code>. Our implementation function should be able to take these flags and generate compatibility constraints for our toolchain.
+            </p>
+            <p>
+              You'll notice the rule comes with the private attributes <code>_interpreter_path</code> and <code>_build_tpl</code>. The <code>_interpreter_path</code> path describes the path to the Python interpreter binary. In most cases, it lives in <code>bin/python3</code>, hence the attributed privacy and default setting. The <code>_build_tpl</code> attribute describes the base template of the injected <code>BUILD.bazel</code>. We wrote our own, but let's give users the option to patch what gets injected in the repository.
+            </p>
+            <p>
+              Let's start implementing our callback function. Let's start by downloading the provided Python mirror URL.
+            </p>
+            <pre><code class="language-python"> # internal/python_interpreter.bzl
+def _py_download(ctx):
+    """
+    Downloads and builds a Python distribution.
+
+    Args:
+        ctx: Repository context.
+    """
+    ctx.report_progress("downloading python")
+    ctx.download_and_extract(
+        url = ctx.attr.urls,
+        sha256 = ctx.attr.sha256,
+        stripPrefix = "python",
+    )
+
+    return None
+</code></pre>
+          <p>
+          Pretty self-explanatory! The <code>repository_ctx</code> object comes pre-baked with a bunch of helper functions that help us achieve what we're trying to do here. In this case we can just give <code>download_and_extract()</code> the mirror URLs and expected digest, and it will extract the Python distribution into the repositores workspace root. 
+          </p>
+          <p>
+            We need to figure out a way to map the values passed in the <code>os</code> and <code>arch</code> attributes to something Bazel can understand.
+            Let's create a simple mapping that maps an attributes value to a Bazel label pointing to a <code>@platforms</code> target.
+          </p>
+          <pre><code class="language-python"> # internal/python_interpreter.bzl
+_OS_MAP = {
+        "darwin": "@platforms//os:osx",
+        "linux": "@platforms//os:linux",
+        "windows": "@platforms//os:windows",
+}
+
+_ARCH_MAP = {
+        "x86_64": "@platforms//cpu:x86_64",
+}</code></pre>
+          <p>
+          Where do these labels come from? They come shipped with Bazel, but you can find their implementation <a href="https://github.com/bazelbuild/platforms">here</a>. The <code>target_compatible_with</code> and <code>exec_compatible_with</code> attributes of the <code>toolchain</code> will accept these labels, as they return the appropriate providers.
+          </p>
+          <p>
+          Let's go ahead and generate some Starlark code for a label list of platform targets to get injected in the generated build file.
+          </p>
+          <pre><code class="language-python">ctx.report_progress("generating build file")
+os_constraint = _OS_MAP[ctx.attr.os]
+arch_constraint = _ARCH_MAP[ctx.attr.arch]
+
+constraints = [os_constraint, arch_constraint]
+    
+# So Starlark doesn't throw an indentation error when this gets injected.
+constraints_str = ",\n        ".join(['"%s"' % c for c in constraints])
+</code></pre>
+          We're taking our platform labels and generating Starlark code for a list literal. 
+          Since Starlark relies on indentation for scoping blocks of code, we have prefix the strings with whitespace, ugh. <code>constraints_str</code> will get propogated to the <code>toolchain</code> in the build file, which will end up looking something like this.
+          <pre><code class="language-python"> # Generated BUILD.bazel file
+toolchain(
+    name = "toolchain",
+    exec_compatible_with = [
+	"@platforms//os:osx",
+        "@platforms//cpu:x86_64",
+    ],
+    target_compatible_with = [
+	"@platforms//os:osx",
+        "@platforms//cpu:x86_64",
+    ],
+    toolchain = ":py_runtime_pair",
+    toolchain_type = "@bazel_tools//tools/python:toolchain_type",
+)</code></pre>
+          </p>
+          <p>
+            Now all that's left is templating the <code>BUILD.bazel</code>, which is again made easy by the <code>repository_ctx</code>.
+          </p>
+          <pre><code class="language-python"># Inject our string substitutions into the BUILD file template, and drop said BUILD file in the WORKSPACE root of the repository.
+substitutions = {
+    "{constraints}": constraints_str,
+    "{interpreter_path}": ctx.attr._interpreter_path,
+}
+
+ctx.template(
+    "BUILD.bazel",
+    ctx.attr._build_tpl,
+    substitutions = substitutions,
+)
+
+return None
+</code></pre>
+          <p>
+            That's it! The implementation is very straightforward. I believe the concepts are more difficult to grasp than the implementation, but they are important to know.
+          </p>
+          <p>
+            Here's the entire rule. Let's take a moment to marvel and be amazed, then we'll head over to the <code>WORKSPACE</code> file to test out our new fancy rule.
+          </p>
+          <pre><code class="language-python"># internal/python_interpreter.bzl
+_OS_MAP = {
+        "darwin": "@platforms//os:osx",
+        "linux": "@platforms//os:linux",
+        "windows": "@platforms//os:windows",
+}
+
+_ARCH_MAP = {
+        "x86_64": "@platforms//cpu:x86_64",
+}
+
+def _py_download(ctx):
+    """
+    Downloads and builds a Python distribution.
+    Args:
+        ctx: Repository context.
+    """
+    ctx.report_progress("downloading python")
+    ctx.download_and_extract(
+        url = ctx.attr.urls,
+        sha256 = ctx.attr.sha256,
+        stripPrefix = "python",
+    )
+    
+    ctx.report_progress("generating build file") 
+    os_constraint = _OS_MAP[ctx.attr.os]
+    arch_constraint = _ARCH_MAP[ctx.attr.arch]
+
+    constraints = [os_constraint, arch_constraint]
+    
+    # So Starlark doesn't throw an indentation error when this gets injected.
+    constraints_str = ",\n        ".join(['"%s"' % c for c in constraints])
+
+    # Inject our string substitutions into the BUILD file template, and drop said BUILD file in the WORKSPACE root of the repository.
+    substitutions = {
+        "{constraints}": constraints_str,
+        "{interpreter_path}": ctx.attr._interpreter_path,
+    }
+
+    ctx.template(
+        "BUILD.bazel",
+        ctx.attr._build_tpl,
+        substitutions = substitutions,
+    )
+
+    return None
+
+py_download = repository_rule(
+    implementation = _py_download,
+    attrs = {
+        "urls": attr.string_list(
+            mandatory = True,
+            doc = "String list of mirror URLs where the Python distribution can be downloaded.",
+        ),
+        "sha256": attr.string(
+            mandatory = True,
+            doc = "Expected SHA-256 sum of the archive.",
+        ),
+        "os": attr.string(
+            mandatory = True,
+            values = ["darwin", "linux", "windows"],
+            doc = "Host operating system.",
+        ),
+        "arch": attr.string(
+            mandatory = True,
+            values = ["x86_64"],
+            doc = "Host architecture.",
+        ),
+        "_interpreter_path": attr.string(
+            default = "bin/python3",
+            doc = "Path you'd expect the python interpreter binary to live.",
+        ),
+        "_build_tpl": attr.label(
+            default = "@rules_py_simple//internal:BUILD.dist.bazel.tpl",
+            doc = "Label denoting the BUILD file template that get's installed in the repo.",
+        )
+    },
+)</code></pre>
          </div>
+         <div class="row">
+           <h5>Using our Repository Rule and Registering the Toolchain</h5>
+           <p>
+              Now that we have a rule that downloads a Python archive and produces toolchain targets, we just need to specify our toolchains in the <code>WORKSPACE</code> file and register them. Before diving in, let's first think about what kind of Python distribution we want to use.
+            </p>
+            <p>
+              The Python interpreter by its nature has runtime dependencies on the host that do not get shipped with the distribution. This is <i>annoying</i>. It's introduces unnecessary flakiness in our hermetic Python, as different host machines will have different
+              versions <code>ssl</code>, <code>zlib</code>, <code>ncurses</code>, etc. These installations can come from HomeBrew, apt, or god knows what else. For this reason, I do not recommend using the official distributions from <a href="https://python.org/downloads/">python.org</a>, you will be sad.
+              Fortunately for us, there is an awesome open-source project, <a href="https://github.com/indygreg/python-build-standalone">python-build-standalone</a>, which aims to produce a "self-contained, highly portable" distribution of Python. We'll use this.
+           </p>
+          
+           </p>
+           Let's define our toolchain repositories and then register them with <code>register_toolchains</code> rule.
+           </p>
+           <pre><code class="language-python"> # WORKSPACE
+workspace(
+    name = "rules_py_simple",
+)
+
+load("@rules_py_simple//internal:python_interpreter.bzl", "py_download")
+
+py_download(
+    name = "py_darwin_x86_64",
+    arch = "x86_64",
+    os = "darwin",
+    sha256 = "fc0d184feb6db61f410871d0660d2d560e0397c36d08b086dfe115264d1963f4",
+    urls = ["https://github.com/indygreg/python-build-standalone/releases/download/20211017/cpython-3.10.0-x86_64-apple-darwin-install_only-20211017T1616.tar.gz"],
+)
+
+py_download(
+    name = "py_linux_x86_64",
+    arch = "x86_64",
+    os = "linux",
+    sha256 = "eada875c9b39cc4bf4a055dd8f5188e99c0c90dd5deb05b6c213f49482fe20a6",
+    urls = ["https://github.com/indygreg/python-build-standalone/releases/download/20211017/cpython-3.10.0-x86_64-unknown-linux-gnu-install_only-20211017T1616.tar.gz"],
+)
+
+# The //:toolchain target points to the toolchain target we wrote in the BUILD file template.
+register_toolchains(
+    "@py_darwin_x86_64//:toolchain",
+    "@py_linux_x86_64//:toolchain",
+)</code></pre>
+           <p>
+            Our <code>py_download</code> rule generates Bazel repositories for each toolchain, which we can then pass to <code>register_toolchains</code>. At runtime, Bazel will evaluate the host and execution platforms, and select the correct toolchain to bundle with target you're trying to build.
+           </p>
+           <p>
+            Let's do a quick test to see if everything works properly. Let's write a program that simple prints the version of its runtime.
+           </p>
+           <pre><code class="language-python"> # main.py
+import sys
+
+print(sys.version)
+</code></pre>
+          <p>
+            Write a <code>py_binary</code> target for it.
+          <p>
+          <pre><code class="language-python"> # BUILD.bazel
+py_binary(
+    name = "bin",
+    srcs = ["bin.py"],
+    visibility = ["//visibility:public"],
+)</code></pre>
+          <p>
+            Run our binary. It should print <code>3.10.0</code> as the version (which the one we pinned in the workspace file).
+          </p>
+          <pre><code class="language-shell">$ bazel run bin
+INFO: Analyzed target //:bin (15 packages loaded, 92 targets configured).
+INFO: Found 1 target...
+Target //:bin up-to-date:
+  bazel-bin/bin
+INFO: Elapsed time: 0.531s, Critical Path: 0.00s
+INFO: 1 process: 1 internal.
+INFO: Build completed successfully, 1 total action
+INFO: Build completed successfully, 1 total action
+3.10.0 (default, Oct 18 2021, 00:33:47) [Clang 13.0.0 ]
+</code></pre>
+          </div>
+          <div class="row">
+            <h5>Done</h5>
+            <p>
+              That's it. Hopefully you found <i>something</i> useful here. My motivation for writing is the lack of open-source implementations for hermetic Python toolchains, despite it being something most people will have to implement if they decide to use Bazel. 
+              I realize that navigating the Bazel ecosystem can be very daunting. The community is small, you often have to lean on official documentation which can be difficult to understand.
+              As I said earlier in the post, the implementation of this stuff tends to be very straightforward, but the concepts surrounding the implementation are complex. I recommend you look around the <a href="https://github.com/vardaro/rules_py_simple">example repo</a> to help you conceptualize how everything fits together.
+            </p>
+          </div>
          <!-- footer  -->
          <div class="contact">
             <span class="contact-link">

@@ -1,198 +1,279 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <!-- Basic Page Needs
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-    <meta charset="utf-8" />
-    <title>Hermetic Python toolchain with Bazel</title>
-    <meta name="description" content="Anthony Vardaro, Software engineer" />
-    <meta name="author" content="Anthony Vardaro" />
-
-    <!-- Mobile Specific Metas
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <!-- CSS
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-    <link rel="stylesheet" href="../css/normalize.css" />
-    <link rel="stylesheet" href="../css/skeleton.css" />
-    <link rel="stylesheet" href="../css/custom.css" />
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/styles/default.min.css">
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/highlight.min.js"></script>
-    <script>
-        hljs.initHighlightingOnLoad();
-    </script>
-
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111662471-1"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-
-        function gtag() {
-            dataLayer.push(arguments);
-        }
-        gtag("js", new Date());
-
-        gtag("config", "UA-111662471-1");
-    </script>
-
-</head>
-
-<body>
-    <div class="container">
-        <div class="row">
+   <head>
+      <!-- Basic Page Needs
+         –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+      <meta charset="utf-8" />
+      <title>Hermetic Python toolchain with Bazel</title>
+      <meta name="description" content="Anthony Vardaro, Software engineer" />
+      <meta name="author" content="Anthony Vardaro" />
+      <!-- Mobile Specific Metas
+         –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <!-- CSS
+         –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+      <link rel="stylesheet" href="../css/normalize.css" />
+      <link rel="stylesheet" href="../css/skeleton.css" />
+      <link rel="stylesheet" href="../css/custom.css" />
+      <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/styles/default.min.css">
+      <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/highlight.min.js"></script>
+      <script>
+         hljs.initHighlightingOnLoad();
+      </script>
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111662471-1"></script>
+      <script>
+         window.dataLayer = window.dataLayer || [];
+         
+         function gtag() {
+             dataLayer.push(arguments);
+         }
+         gtag("js", new Date());
+         
+         gtag("config", "UA-111662471-1");
+      </script>
+   </head>
+   <body>
+      <div class="container">
+         <div class="row">
             <h3 id="home-title">Hermetic Python toolchain with Bazel</h3>
             <p><a href="/">Anthony A. Vardaro</a>, Dec 2021</p>
-        </div>
-        <div class="row">
+         </div>
+         <div class="row">
             <p>
-              Here's how to quickly bootstrap a hermetic Python toolchain with Bazel.
+               Here's how to quickly bootstrap a hermetic Python toolchain with Bazel.
             </p>
-        </div>
-    
-        <div class="row">
-          <h5>Motivation</h5>
-          <p>
-              The primary benefit in implementing your own Python toolchain is that it allows you to escape the dreaded autodetecting toolchain that ships with Bazel, labeled as <code>@bazel_tools//tools/python:_autodetecting_py_runtime_pair</code>.  
-              This toolchain is dissapointingly non-hermetic. It depends on the host machines installation of Python, wherever and whatever that might be.  
-              The default autodetecting toolchain attempts to resolve a Python runtime by examining the hosts <code>$PATH</code>, thus damaging reproducibility of Python builds across different host machines. It's completely dependent on the flaky <code>$PATH</code> variable,
-              which could be modified by PyEnv, Apt, or whatever random Python you happen to have installed locally. This mean two developers building the same target will produce different binaries, which is very bad. As you can imagine, this becomes the source of numerous Github issues created by frustrated users who don't understand why their builds are not reproducible.
-          </p>
-          <p>
-          The goal here is to implement our own heremtic Python toolchain, so that everyone is on the same page. We'll do this by writing a repository rule that downloads a pinned Python distribution and generates a <code>BUILD.bazel</code> that declares a constrained <code>toolchain</code> target.
-                   
-          </p>
-        </div>
+         </div>
+         <div class="row">
+            <h5>Motivation</h5>
+            <p>
+               The primary benefit in implementing your own Python toolchain is that it allows you to escape the dreaded autodetecting toolchain that ships with Bazel, labeled as <code>@bazel_tools//tools/python:_autodetecting_py_runtime_pair</code>.  
+               This toolchain is dissapointingly non-hermetic. It depends on the host machines installation of Python, wherever and whatever that might be.  
+               The default autodetecting toolchain attempts to resolve a Python runtime by examining the hosts <code>$PATH</code>, thus damaging reproducibility of Python builds across different host machines. It's completely dependent on the flaky <code>$PATH</code> variable,
+               which could be modified by PyEnv, Apt, or whatever random Python you happen to have installed locally. This mean two developers building the same target will produce different binaries, which is very bad. As you can imagine, this becomes the source of numerous Github issues created by frustrated users who don't understand why their builds are not reproducible.
+            </p>
+            <p>
+               The goal here is to implement our own heremtic Python toolchain, so that everyone is on the same page. We'll do this by writing a repository rule that downloads a pinned Python distribution and generates a <code>BUILD.bazel</code> that declares a constrained <code>toolchain</code> target.
+               We'll be working out of this <a href="https://github.com/vardaro/rules_py_simple">example repository</a>.
+            </p>
+         </div>
+         <div class="row">
+            <h5>Concepts and Terminology</h5>
+            <p>
+               If you're not familiar with Bazels complex toolchain ecosystem, the official documentation on <a href="https://docs.bazel.build/versions/main/toolchains.html">Toolchains</a> and <a href="https://docs.bazel.build/versions/main/platforms.html">Platforms</a> are worth your time.
+            </p>
+            <p>
+               A <i>platform</i> is a named collection system constraints that describe where a build is intended to run. This is done by creating a <code><a href="https://docs.bazel.build/versions/main/be/platform.html#platform">platform</a></code> rule. At runtime, Bazel identifies three platform targets which serve different purposes. The <i>host platform</i> is the platform on which Bazel is running. For me, it'd be my laptop. The <i>execution platform</i> is the platform that Bazel executes <a href="https://docs.bazel.build/versions/main/skylark/lib/Action.html">actions</a> on. For me, it's still my laptop. If I were to use remote execution, the execution platform would be the platform of the execution environment, the host platform would still be my laptop. The <i>target platform</i> is the platform in which the final build is intended to run. If I were cross-compiling a target from a darwin host machine to a linux container, the host platform would be my laptop and the target platform would be the linux container.
+            </p>
+            <p>
+               A <i>constraint</i> is an individual criteria that a platform must satisfy. Remember, a platform is simply a named collection of these constraints. Constraints allow you to add cardinality to your platform definitions. Bazel ships with <a href="https://github.com/bazelbuild/platforms">predefined platform definitions</a>, which is what we'll be using here.
+            </p>
+            <p>
+               A <i>toolchain</i> is a special target that bundles a language-agnostic toolchain implementation, a toolchain type, and a set of supported platforms.
+            </p>
+            <p>
+               A <i>repository rule</i> is a special Bazel rule that registers an external repository in the Bazel workspace. It can only be called from the <code>WORKSPACE</code> file, and it provides access to non-hermetic actions in the loading phase, which are sometimes necessary when building workspace dependencies.
+               The hermetic Python we'll be implementing here will be implemented as a repository rule. It will generate unique Bazel repositories for each toolchain.
+            </p>
+            <p>
+               How does this fit together? At runtime, Bazel will identify the registered toolchains, the host platform, and the execution platform. Using the constraints described in the toolchains, and the constraints described in the platform, Bazel will attempt to select suitable toolchain pairings for the host and execution platforms.    
+               I recommend building something with the <code>--toolchain_resolution_debug=True</code>, as it will help you conceptualize Bazels fascinating toolchain resolution process.
+            </p>
+         </div>
+         <div class="row">
+            <h5>Writing our BUILD File Template</h5>
+            <p>
+              Our repository rule is going to download a Python distribution archive and generate a <code>BUILD.bazel</code> file that gets injected at the workspace root of the Python repository. Before implementing our repository rule, we first need to create the framework of the build file that's dropped in the Python workspace root.
+              This is where we also specify our <code>py_runtime</code>, <code>py_runtime_pair</code>, and <code>toolchain</code> targets.
+            </p>
+
+            <p>
+              Let's write some <code>filegroup</code> targets for clustering all the files we find in the Python distribution.
+            </p>
+            <pre><code class="language-python"># internal/BUILD.dist.bazel.tpl
+filegroup(
+    name = "files",
+    srcs = glob(["install/**"], exclude = ["**/* *"]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "interpreter",
+    srcs = ["{interpreter_path}"],
+    visibility = ["//visibility:public"],
+)</pre></code>
+            <p>
+              These targets are useful to the <code>py_runtime</code> target that we're going to pass them to later. You'll notice the usage of string substitution templates, namely with <code>{interpreter_path}</code>. When our repository rule implementation runs during the loading phase, our named substitutions will get injected into the <code>BUILD.bazel</code> file that this template generates.
+            </p>
+
+            <p>
+              Let's define our runtime and toolchain targets.
+            </p>
+            <pre><code class="language-python"> # internal/BUILD.dist.bazel.tpl
+load("@bazel_tools//tools/python:toolchain.bzl", "py_runtime_pair")
+
+filegroup(
+    name = "files",
+    srcs = glob(["install/**"], exclude = ["**/* *"]),
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "interpreter",
+    srcs = ["{interpreter_path}"],
+    visibility = ["//visibility:public"],
+)
+
+# The py_runtime target denotes a platform runtime or a hermetic runtime.
+# The platform runtime (system runtime) by its nature is non-hermetic.
+# This py_runtime target is for our hermetic Python.
+py_runtime(
+    name = "py_runtime",
+    files = [":files"],
+    interpreter = ":interpreter",
+    python_version = "PY3",
+    visibility = ["//visibility:public"],
+)
+
+# A py_runtime_pair is used to couple hermetic Python2 and Python3 runtimes into a toolchain.
+# We're not supporting py2, hence we pass None.
+py_runtime_pair(
+    name = "py_runtime_pair",
+    py2_runtime = None,
+    py3_runtime = ":py_runtime",
+)
+
+toolchain(
+    name = "toolchain",
+    exec_compatible_with = [
+	{constraints},
+    ],
+    target_compatible_with = [
+	{constraints},
+    ],
+    toolchain = ":py_runtime_pair",
+
+    # We're just using the builtin Python toolchain type. 
+    # A toolchain_type is simply a name that describes the type of the toolchain.
+    # We could define our own toolchain_type but there is no need to for this use case.
+    toolchain_type = "@bazel_tools//tools/python:toolchain_type",
+)</code></pre>
+            <p>
+            Here we create a <code>py_runtime</code> target for accepting the <code>filegroup</code> targets described above. The <code>py_runtime</code> is a special target for describing a Python runtime, regardless of whether its a system runtime or a hermetic runtime.
+            In our case, we're describing a hermetic runtime (it's pretty much the whole point of this article).
+            </p>
+
+            <p>
+            We then take our <code>py_runtime</code> and pass it to a <code>py_runtime_pair</code> target. The <code>py_runtime_pair</code> rule is a rule for coupling a Python2 and Python3 runtime into the same toolchain. It returns a <code>ToolchainInfo</code> provider, which is an object propogated to rules that consume this toolchain. Because this is a hermetic Python3 implementation, we can pass <code>None</code> to the <code>py2_runtime</code>.
+            </p>
+
+            <p>
+            Now we can pass our runtime pair to a <code>toolchain</code> target. This target describes a toolchains compatible host and execution platforms, and it's toolchain type. The toolchain type is simply an alias for naming certain kinds of toolchains. You can implement your own <code>toolchain_type</code>, but the one that ships with Bazel is sufficient for us. 
+            </p>
+
+            <p>
+            That's pretty much it for our <code>BUILD.bazel</code> file template. Now we can implement our supporting <code>repository_rule</code>.
+            </p>
+         </div>
+
+         <div class="row">
+            <h5>Writing our Repository Rule</h5>
+            <p>
+               For our toolchain, we're going to implement a <a href="https://docs.bazel.build/versions/main/skylark/repository_rules.html">repository_rule</a> that downloads a Python distribution and generates a <code>BUILD.bazel</code> file that describes a toolchain.
+            </p>
+            <p>
+               Let's describe our repository rule. Let's start by just giving it a name.
+            </p>
+            <pre><code class="language-python"># internal/python_interpreter.bzl
+def _py_download(ctx):
+    """
+    Downloads a Python distribution and registers a toolchain.
   
-        <div class="row">
-          <h5>Concepts and Terminology</h5>
-          <p>
-              If you're not familiar with Bazels complex toolchain ecosystem, the official documentation on <a href="https://docs.bazel.build/versions/main/toolchains.html">Toolchains</a> and <a href="https://docs.bazel.build/versions/main/platforms.html">Platforms</a> are worth your time.
-          </p>
-          <p>
-            A <i>platform</i> is a named collection system constraints that describe where a build is intended to run. This is done by creating a <code><a href="https://docs.bazel.build/versions/main/be/platform.html#platform">platform</a></code> rule. At runtime, Bazel identifies three platform targets which serve different purposes. The <i>host platform</i> is the platform on which Bazel is running. For me, it'd be my laptop. The <i>execution platform</i> is the platform that Bazel executes <a href="https://docs.bazel.build/versions/main/skylark/lib/Action.html">actions</a> on. For me, it's still my laptop. If I were to use remote execution, the execution platform would be the platform of the execution environment, the host platform would still be my laptop. The <i>target platform</i> is the platform in which the final build is intended to run. If I were cross-compiling a target from a darwin host machine to a linux container, the host platform would be my laptop and the target platform would be the linux container.
-          </p>
-          <p>
-            A <i>constraint</i> is an individual criteria that a platform must satisfy. Remember, a platform is simply a named collection of these constraints. Constraints allow you to add cardinality to your platform definitions. Bazel ships with <a href="https://github.com/bazelbuild/platforms">predefined platform definitions</a>, which is what we'll be using here.
-          </p>
-          <p>
-            A <i>toolchain</i> is a special target that bundles a language-agnostic toolchain implementation, a toolchain type, and a set of supported platforms.
-          </p>
-    
-          <p>
-            How does this fit together? At runtime, Bazel will identify the registered toolchains, the host platform, and the execution platform. Using the constraints described in the toolchains, and the constraints described in the platform, Bazel will attempt to select suitable toolchain pairings for the host and execution platforms.    
-            I recommend building something with the <code>--toolchain_resolution_debug=True</code>, as it will help you conceptualize Bazels fascinating toolchain resolution process.
-          </p>
-        </div>
+    Args:
+        ctx: Repository context.
+    """
+    pass
 
-        <div class="row">
-            <h5>Including the Header Files</h5>
+py_download = repository_rule(
+    implementation = _py_download,
+    attrs = {},
+)</code></pre>
             <p>
-                You need to expose the directory containing your header files in your <code>binding.gyp</code>. For me, they are within a subdirectory of my addon, so I can use the handy <code>module_root_dir</code> environment variable to reference it.
+            The <code>repository_rule</code> function is a special builtin function for declaring a new repository rule. We're describing a new rule, named <code>py_download</code>, which will generate Python toolchain targets from a Python distribution. The <code>implementation</code> argument passes a callback function, <code>_py_download</code>, which implements the rule. The <a href="https://docs.bazel.build/versions/main/skylark/lib/repository_ctx.html">repository context</a> gets passed to the implementation function, which provides an API for handling the non-hermetic operations a repository rule allows you to do.
+               Unlike conventional Bazel rules, repository rules do not have a return value. Their purpose is typically some variation of downloading an archive and generating a <code>BUILD.bazel</code> for it. The <code>attrs</code> argument takes a dictionary
+               describing the attributes of the rules. Right now, it doesn't have any. We're also able to call this from <code>WORKSPACE</code> now.
             </p>
-            <pre><code>
-{
-    "include_dirs": [
-        "<(module_root_dir)/tobii/include"
-    ],
-}
-            </code></pre>
-        </div>
+            <pre><code class="language-python"># WORKSPACE
+workspace(
+    name = "rules_py_simple",
+)
 
+load("@rules_py_simple//internal:python_interpreter.bzl", "py_download")
 
-        <div class="row">
-            <h5>Linking the .lib Files</h5>
+py_download(
+    name = "my_py_download",
+)</code></pre>
             <p>
-                You also need to tell node-gyp where it can find the .lib files in your library.
+               Our rule doesn't do anything yet, let's give it some attributes.
             </p>
-            <pre><code>
-{
-    "libraries": [
-        "<(module_root_dir)/tobii/lib/x64/tobii_interaction_lib.lib",
-        "<(module_root_dir)/tobii/lib/x64/tobii_stream_engine.lib"
-    ],
-}
-            </code></pre>
-        </div>
+            <pre><code class="language-python">
+def _py_download(ctx):
+    """
+    Downloads a Python distribution and registers a toolchain.
+  
+    Args:
+        ctx: Repository context.
+    """
+    pass
 
-
-        <div class="row">
-            <h5>Copy the DLLs to Your Target Build Folder</h5>
+py_download = repository_rule(
+    implementation = _py_download,
+    attrs = {
+        "urls": attr.string_list(
+            mandatory = True,
+            doc = "String list of mirror URLs where the Python distribution can be downloaded.",
+        ),
+        "sha256": attr.string(
+            mandatory = True,
+            doc = "Expected SHA-256 sum of the archive.",
+        ),
+        "os": attr.string(
+            mandatory = True,
+            values = ["darwin", "linux", "windows"],
+            doc = "Host operating system.",
+        ),
+        "arch": attr.string(
+            mandatory = True,
+            values = ["x86_64"],
+            doc = "Host architecture.",
+        ),
+        "_interpreter_path": attr.string(
+            default = "bin/python3",
+            doc = "Path you'd expect the python interpreter binary to live.",
+        ),
+        "_build_tpl": attr.label(
+            default = "@rules_py_simple//internal:BUILD.dist.bazel.tpl",
+            doc = "Label denoting the BUILD file template that get's installed in the repo.",
+        )
+    },
+)</pre></code>
             <p>
-                Specify where the DLLs are, and where to copy them at build. In my case, I'm building to
-                <code>./build/Release/</code>. My <code>addon.node</code> target and both of my defined DLLs will be written to this directory.
+              We've created an attribute set for our users to describe their toolchain. All they need to do is provide our rule with a mirror URL, a digest, a target platform, and a target CPU, and our rule can handle the heavy lifting of generating the necessary toolchain bits.
+              You'll notice the rule comes with the private attributes <code>_interpreter_path</code> and <code>_build_tpl</code>. The <code>_interpreter_path</code> path describes the path to the Python interpreter binary. In most cases, it lives in <code>bin/python3</code>, hence the attributed privacy and default setting. The <code>_build_tpl</code> attribute describes the base template of the injected <code>BUILD.bazel</code>. We're writing our own, but let's give users the option to customize/patch what gets injected in the repository.
             </p>
-            <pre><code>
-{
-    "copies": [
-        {
-        "destination": "<(module_root_dir)/build/Release/",
-            "files": [
-                "<(module_root_dir)/tobii/lib/x64/tobii_interaction_lib.dll",
-                "<(module_root_dir)/tobii/lib/x64/tobii_stream_engine.dll"
-            ]
-        },
-    ]
-}
-            </code></pre>
-        </div>
-
-        <div class="row">
-            <h5>The Finished <code>binding.gyp</code></h5>
-            <p>
-                Here is final product of the <code>binding.gyp</code> file.
-            </p>
-            <pre><code>
-{
-  "targets": [
-    {
-      "target_name": "addon",
-      "sources": [
-        "main.cc"
-      ],
-      "conditions": [
-        [
-          "OS==\"win\"",
-          {
-            "libraries": [
-              "<(module_root_dir)/tobii/lib/x64/tobii_interaction_lib.lib",
-              "<(module_root_dir)/tobii/lib/x64/tobii_stream_engine.lib"
-            ],
-            "include_dirs": [
-              "<(module_root_dir)/tobii/include"
-            ],
-            "copies": [
-              {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [
-                  "<(module_root_dir)/tobii/lib/x64/tobii_interaction_lib.dll",
-                  "<(module_root_dir)/tobii/lib/x64/tobii_stream_engine.dll"
-                ]
-              }
-            ]
-          }
-        ]
-      ]
-    }
-  ]
-}
-            </code></pre>
-        </div>
-
-        <!-- footer  -->
-        <div class="contact">
+         </div>
+         <!-- footer  -->
+         <div class="contact">
             <span class="contact-link">
-        <a target="_blank" href="https://github.com/vardaro">Github</a>
-      </span>
+            <a target="_blank" href="https://github.com/vardaro">Github</a>
+            </span>
             <span class="contact-link">
-        <a target="_blank" href="mailto:me@anthonyvardaro.com">Email</a>
-      </span>
+            <a target="_blank" href="mailto:me@anthonyvardaro.com">Email</a>
+            </span>
             <span class="contact-link">
-        <a target="_blank" href="https://www.linkedin.com/in/anthony-vardaro-27a070138/">LinkedIn</a>
-      </span>
-        </div>
-    </div>
-</body>
-
+            <a target="_blank" href="https://www.linkedin.com/in/anthony-vardaro-27a070138/">LinkedIn</a>
+            </span>
+         </div>
+      </div>
+   </body>
 </html>

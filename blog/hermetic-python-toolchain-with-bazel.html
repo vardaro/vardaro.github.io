@@ -517,7 +517,8 @@ INFO: Build completed successfully, 1 total action
           <div class="row">
             <h5>Done</h5>
             <p>
-              That's it. Hopefully you found <i>something</i> useful here. My motivation for writing is the lack of open-source implementations for hermetic Python toolchains, despite it being something most people will have to implement if they decide to use Bazel. 
+              That's it. Hopefully you found <i>something</i> useful here. It's worth noting that a repository rule is not the only way to implement these. The implementation is up to you, and for your use case it could be simple as an <code>http_archive</code> with some patch commands.
+              There are very few open-source implementations of hermetic Python toolchains, despite it being something most people will have to implement if they decide to use Bazel. 
               I realize that navigating the Bazel ecosystem can be very daunting. The community is small, you often have to lean on official documentation which can be difficult to understand.
               As I said earlier in the post, the implementation of this stuff tends to be very straightforward, but the concepts surrounding the implementation are complex. I recommend you look around the <a href="https://github.com/vardaro/rules_py_simple">example repo</a> to help you conceptualize how everything fits together.
             </p>

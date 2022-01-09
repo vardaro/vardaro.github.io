@@ -50,7 +50,7 @@
                The primary benefit in implementing your own Python toolchain is that it allows you to escape the dreaded autodetecting toolchain that ships with Bazel, labeled as <code>@bazel_tools//tools/python:_autodetecting_py_runtime_pair</code>.  
                This toolchain is dissapointingly non-hermetic. It depends on the host machines installation of Python, wherever and whatever that might be.  
                The default autodetecting toolchain attempts to resolve a Python runtime by examining the hosts <code>$PATH</code>, thus damaging reproducibility of Python builds across different host machines. It's completely dependent on the flaky <code>$PATH</code> variable,
-               which could be modified by PyEnv, Apt, or whatever random Python you happen to have installed locally. This mean two developers building the same target will produce different binaries, which is very bad. As you can imagine, this becomes the source of numerous Github issues created by frustrated users who don't understand why their builds are not reproducible.
+               which could be modified by PyEnv, Apt, or whatever random Python you happen to have installed locally. This mean two developers building the same target will produce different binaries, which is very bad. As you can imagine, this becomes the source of numerous Github issues created by frustrated users who don't understand why their builds are behaving deterministically.
             </p>
             <p>
                The goal here is to implement our own heremtic Python toolchain, so that everyone is on the same page. We'll do this by writing a repository rule that downloads a pinned Python distribution and generates a <code>BUILD.bazel</code> that declares a constrained <code>toolchain</code> target.
@@ -63,16 +63,16 @@
                If you're not familiar with Bazels complex toolchain ecosystem, the official documentation on <a href="https://docs.bazel.build/versions/main/toolchains.html">Toolchains</a> and <a href="https://docs.bazel.build/versions/main/platforms.html">Platforms</a> are worth your time.
             </p>
             <p>
-               A <i>platform</i> is a named collection system constraints that describe where a build is intended to run. This is done by creating a <code><a href="https://docs.bazel.build/versions/main/be/platform.html#platform">platform</a></code> rule. At runtime, Bazel identifies three platform targets which serve different purposes. The <i>host platform</i> is the platform on which Bazel is running. For me, it'd be my laptop. The <i>execution platform</i> is the platform that Bazel executes <a href="https://docs.bazel.build/versions/main/skylark/lib/Action.html">actions</a> on. For me, it's still my laptop. If I were to use remote execution, the execution platform would be the platform of the execution environment, the host platform would still be my laptop. The <i>target platform</i> is the platform in which the final build is intended to run. If I were cross-compiling a target from a darwin host machine to a linux container, the host platform would be my laptop and the target platform would be the linux container.
+               A <i>platform</i> is a named collection system constraints that describe where a code is intended to run. This is done by creating a <code><a href="https://docs.bazel.build/versions/main/be/platform.html#platform">platform</a></code> rule. At runtime, Bazel identifies three platform targets which serve different purposes. The <i>host platform</i> is the platform on which Bazel is running. For me, it'd be my laptop. The <i>execution platform</i> is the platform that Bazel executes <a href="https://docs.bazel.build/versions/main/skylark/lib/Action.html">actions</a> on. For me, it's still my laptop. If I were to use remote execution, the execution platform would be the platform of the execution environment, the host platform would still be my laptop. The <i>target platform</i> is the platform in which the final build is intended to run. If I were cross-compiling a target from a darwin host machine to a linux container, the host platform would be my laptop and the target platform would be the linux container.
             </p>
             <p>
                A <i>constraint</i> is an individual criteria that a platform must satisfy. Remember, a platform is simply a named collection of these constraints. Constraints allow you to add cardinality to your platform definitions. Bazel ships with <a href="https://github.com/bazelbuild/platforms">predefined platform definitions</a>, which is what we'll be using here.
             </p>
             <p>
-               A <i>toolchain</i> is a special target that bundles a language-agnostic toolchain implementation, a toolchain type, and a set of supported platforms.
+               A <i>toolchain</i> is a target that bundles a language-agnostic toolchain implementation, a toolchain type, and a set of supported platforms.
             </p>
             <p>
-               A <i>repository rule</i> is a special Bazel rule that registers an external repository in the Bazel workspace. It can only be called from the <code>WORKSPACE</code> file, and it provides access to non-hermetic actions in the loading phase, which are sometimes necessary when building workspace dependencies.
+               A <i>repository rule</i> is a Bazel rule that registers an external repository in the Bazel workspace. It can only be called from the <code>WORKSPACE</code> file, and it provides access to non-hermetic actions in the loading phase, which are sometimes necessary when building workspace dependencies.
                The hermetic Python we'll be implementing here will be implemented as a repository rule. It will generate unique Bazel repositories for each toolchain.
             </p>
             <p>
@@ -201,7 +201,7 @@ py_download = repository_rule(
             <p>
             The <code>repository_rule</code> function is a special builtin function for declaring a new repository rule. We're describing a new rule, named <code>py_download</code>, which will generate Python toolchain targets from a Python distribution. The <code>implementation</code> argument passes a callback function, <code>_py_download</code>, which implements the rule. The <a href="https://docs.bazel.build/versions/main/skylark/lib/repository_ctx.html">repository context</a> gets passed to the implementation function, which provides an API for handling the non-hermetic operations a repository rule allows you to do.
                Unlike conventional Bazel rules, repository rules do not have a return value. Their purpose is typically some variation of downloading an archive and generating a <code>BUILD.bazel</code> for it. The <code>attrs</code> argument takes a dictionary
-               describing the attributes of the rules. Right now, it doesn't have any. We're also able to call this from <code>WORKSPACE</code> now.
+               describing the attributes of the rule. Right now, it doesn't have any. We're able to call this from <code>WORKSPACE</code> now.
             </p>
             <pre><code class="language-python"># WORKSPACE
 workspace(
@@ -485,7 +485,7 @@ register_toolchains(
            <p>
             Let's do a quick test to see if everything works properly. Let's write a program that simple prints the version of its runtime.
            </p>
-           <pre><code class="language-python"> # main.py
+           <pre><code class="language-python"> # bin.py
 import sys
 
 print(sys.version)
@@ -500,7 +500,7 @@ py_binary(
     visibility = ["//visibility:public"],
 )</code></pre>
           <p>
-            Run our binary. It should print <code>3.10.0</code> as the version (which the one we pinned in the workspace file).
+            Run our binary. It should print <code>3.10.0</code> as the version (which is the one we pinned in the workspace file).
           </p>
           <pre><code class="language-shell">$ bazel run bin
 INFO: Analyzed target //:bin (15 packages loaded, 92 targets configured).
@@ -518,7 +518,7 @@ INFO: Build completed successfully, 1 total action
             <h5>Done</h5>
             <p>
               That's it. Hopefully you found <i>something</i> useful here. It's worth noting that a repository rule is not the only way to implement these. The implementation is up to you, and for your use case it could be simple as an <code>http_archive</code> with some patch commands.
-              There are very few open-source implementations of hermetic Python toolchains, despite it being something most people will have to implement if they decide to use Bazel. 
+              There are very few open-source implementations of hermetic Python toolchains, which is what motivated me to write. It's something most people will have to implement if they decide to use Bazel.
               I realize that navigating the Bazel ecosystem can be very daunting. The community is small, you often have to lean on official documentation which can be difficult to understand.
               As I said earlier in the post, the implementation of this stuff tends to be very straightforward, but the concepts surrounding the implementation are complex. I recommend you look around the <a href="https://github.com/vardaro/rules_py_simple">example repo</a> to help you conceptualize how everything fits together.
             </p>

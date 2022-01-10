@@ -50,7 +50,7 @@
                The primary benefit in implementing your own Python toolchain is that it allows you to escape the dreaded autodetecting toolchain that ships with Bazel.  
                This toolchain is dissapointingly non-hermetic. It depends on the host machines installation of Python, whatever and wherever that might be.  
                The default autodetecting toolchain attempts to resolve a Python runtime by examining the hosts <code>$PATH</code>, thus damaging reproducibility of Python builds across different host machines. The <code>$PATH</code> variable is flaky,
-               which could be modified by PyEnv, Apt, or whatever random Python you happen to have installed locally. This means two developers building the same target will produce different binaries, which is very bad. As you can imagine, this becomes the source of numerous Github issues created by frustrated users who don't understand why their builds are behaving deterministically.
+               it can be modified by PyEnv, Apt, or whatever random Python you happen to have installed locally. This means two developers building the same target will produce different binaries, which is very bad. As you can imagine, this becomes the source of numerous Github issues created by frustrated users who don't understand why their builds are behaving deterministically.
             </p>
             <p>
                The goal here is to implement our own hermetic Python toolchain, so that everyone is on the same page. We'll do this by writing a repository rule that downloads a pinned Python distribution and generates a <code>BUILD.bazel</code> that declares a constrained <code>toolchain</code> target.

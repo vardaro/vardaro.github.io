@@ -60,7 +60,7 @@
          <div class="row">
             <h5>Concepts and Terminology</h5>
             <p>
-               If you're not familiar with Bazels complex toolchain ecosystem, the official documentation on <a href="https://docs.bazel.build/versions/main/toolchains.html">Toolchains</a> and <a href="https://docs.bazel.build/versions/main/platforms.html">Platforms</a> are worth your time.
+               If you're not familiar with Bazels toolchain ecosystem, the official documentation on <a href="https://docs.bazel.build/versions/main/toolchains.html">Toolchains</a> and <a href="https://docs.bazel.build/versions/main/platforms.html">Platforms</a> are worth your time.
             </p>
             <p>
                A <i>platform</i> is a named collection of system constraints that describe where code is intended to run. This is done by creating a <code><a href="https://docs.bazel.build/versions/main/be/platform.html#platform">platform</a></code> rule. At runtime, Bazel identifies three platform targets which serve different purposes. The <i>host platform</i> is the platform on which Bazel is running. For me, it'd be my laptop. The <i>execution platform</i> is the platform that Bazel executes <a href="https://docs.bazel.build/versions/main/skylark/lib/Action.html">actions</a> on. For me, it's still my laptop. If I were to use remote execution, the execution platform would be the platform of the execution environment, the host platform would still be my laptop. The <i>target platform</i> is the platform in which the final build is intended to run. If I were cross-compiling a target from a darwin host machine to a linux container, the host platform would be my laptop and the target platform would be the linux container.

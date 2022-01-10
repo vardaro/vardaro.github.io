@@ -484,7 +484,7 @@ register_toolchains(
             Our <code>py_download</code> rule generates Bazel repositories for each toolchain, which we can then pass to <code>register_toolchains</code>. At runtime, Bazel will evaluate the host and execution platforms, and select the correct toolchain to bundle with target you're trying to build.
            </p>
            <p>
-            Let's do a quick test to see if everything works properly. Let's write a program that simple prints the version of its runtime.
+            Let's do a quick test to see if everything works properly. Let's write a program that simply prints the version of its runtime.
            </p>
            <pre><code class="language-python"> # bin.py
 import sys

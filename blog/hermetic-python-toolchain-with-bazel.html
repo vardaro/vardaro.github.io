@@ -53,7 +53,7 @@
                which could be modified by PyEnv, Apt, or whatever random Python you happen to have installed locally. This mean two developers building the same target will produce different binaries, which is very bad. As you can imagine, this becomes the source of numerous Github issues created by frustrated users who don't understand why their builds are behaving deterministically.
             </p>
             <p>
-               The goal here is to implement our own heremtic Python toolchain, so that everyone is on the same page. We'll do this by writing a repository rule that downloads a pinned Python distribution and generates a <code>BUILD.bazel</code> that declares a constrained <code>toolchain</code> target.
+               The goal here is to implement our own hermetic Python toolchain, so that everyone is on the same page. We'll do this by writing a repository rule that downloads a pinned Python distribution and generates a <code>BUILD.bazel</code> that declares a constrained <code>toolchain</code> target.
                We'll be working out of this <a href="https://github.com/vardaro/rules_py_simple">example repository</a>.
             </p>
          </div>
@@ -77,7 +77,7 @@
             </p>
             <p>
                How does this fit together? At runtime, Bazel will identify the registered toolchains, the host platform, and the execution platform. Using the constraints described in the toolchains, and the constraints described in the platform, Bazel will attempt to select suitable toolchain pairings for the host and execution platforms.    
-               I recommend building something with the <code>--toolchain_resolution_debug=True</code>, as it will help you conceptualize Bazels fascinating toolchain resolution process.
+               I recommend building something with the <code>--toolchain_resolution_debug=True</code> set, as it will help you conceptualize Bazels fascinating toolchain resolution process.
             </p>
          </div>
          <div class="row">
@@ -187,7 +187,7 @@ toolchain(
             <pre><code class="language-python"># internal/python_interpreter.bzl
 def _py_download(ctx):
     """
-    Downloads a Python distribution and registers a toolchain.
+    Downloads a Python distribution and registers a toolchain target.
   
     Args:
         ctx: Repository context.
@@ -219,7 +219,7 @@ py_download(
             <pre><code class="language-python"> # internal/python_interpreter.bzl
 def _py_download(ctx):
     """
-    Downloads a Python distribution and registers a toolchain.
+    Downloads a Python distribution and registers a toolchain target.
   
     Args:
         ctx: Repository context.
@@ -272,7 +272,7 @@ py_download = repository_rule(
             <pre><code class="language-python"> # internal/python_interpreter.bzl
 def _py_download(ctx):
     """
-    Downloads and builds a Python distribution.
+    Downloads a Python distribution and registers a toolchain target.
 
     Args:
         ctx: Repository context.
@@ -291,7 +291,7 @@ def _py_download(ctx):
           </p>
           <p>
             We need to figure out a way to map the values passed in the <code>os</code> and <code>arch</code> attributes to something Bazel can understand.
-            Let's create a simple mapping that maps an attributes value to a Bazel label pointing to a <code>@platforms</code> target.
+            Let's create a simple mapping that maps an attributes value to a Bazel label pointing to a <code>@platforms//</code> target.
           </p>
           <pre><code class="language-python"> # internal/python_interpreter.bzl
 _OS_MAP = {
@@ -319,7 +319,7 @@ constraints = [os_constraint, arch_constraint]
 constraints_str = ",\n        ".join(['"%s"' % c for c in constraints])
 </code></pre>
           We're taking our platform labels and generating Starlark code for a list literal. 
-          Since Starlark relies on indentation for scoping blocks of code, we have prefix the strings with whitespace, ugh. <code>constraints_str</code> will get propogated to the <code>toolchain</code> in the build file, which will end up looking something like this.
+          Since Starlark relies on indentation for scoping blocks of code, we need to prefix the strings with whitespace, ugh. <code>constraints_str</code> will get propogated to the <code>toolchain</code> in the build file, which will end up looking something like this.
           <pre><code class="language-python"> # Generated BUILD.bazel file
 toolchain(
     name = "toolchain",
@@ -371,7 +371,7 @@ _ARCH_MAP = {
 
 def _py_download(ctx):
     """
-    Downloads and builds a Python distribution.
+    Downloads a Python distribution and registers a toolchain target.
     Args:
         ctx: Repository context.
     """
@@ -443,8 +443,8 @@ py_download = repository_rule(
               Now that we have a rule that downloads a Python archive and produces toolchain targets, we just need to specify our toolchains in the <code>WORKSPACE</code> file and register them. Before diving in, let's first think about what kind of Python distribution we want to use.
             </p>
             <p>
-              The Python interpreter by its nature has runtime dependencies on the host that do not get shipped with the distribution. This is <i>annoying</i>. It's introduces unnecessary flakiness in our hermetic Python, as different host machines will have different
-              versions <code>ssl</code>, <code>zlib</code>, <code>ncurses</code>, etc. These installations can come from HomeBrew, apt, or god knows what else. For this reason, I do not recommend using the official distributions from <a href="https://python.org/downloads/">python.org</a>, you will be sad.
+              The Python interpreter by its nature has runtime dependencies on the host that do not get shipped with the distribution. This is annoying. It's introduces unnecessary flakiness in our hermetic interpreter, as different host machines will have different
+              versions <code>ssl</code>, <code>zlib</code>, <code>ncurses</code>, etc. These installations can come from HomeBrew, apt, or god knows what else. For this reason, I do not recommend using the official distributions from <a href="https://python.org/downloads/">python.org</a>, you will be unhappy.
               Fortunately for us, there is an awesome open-source project, <a href="https://github.com/indygreg/python-build-standalone">python-build-standalone</a>, which aims to produce a "self-contained, highly portable" distribution of Python. We'll use this.
            </p>
           

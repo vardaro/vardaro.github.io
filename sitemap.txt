@@ -1,3 +1,4 @@
 https://www.anthonyvardaro.com/
 https://www.anthonyvardaro.com/blog/
 https://www.anthonyvardaro.com/blog/how-to-link-dll.html
+https://www.anthonyvardaro.com/blog/hermetic-python-toolchain-with-bazel.html

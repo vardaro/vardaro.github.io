@@ -444,12 +444,12 @@ py_download = repository_rule(
             </p>
             <p>
               The Python interpreter by its nature has runtime dependencies on the host that do not get shipped with the distribution. This is annoying. It's introduces unnecessary flakiness in our hermetic interpreter, as different host machines will have different
-              versions <code>ssl</code>, <code>zlib</code>, <code>ncurses</code>, etc. These installations can come from HomeBrew, apt, or god knows what else. For this reason, I do not recommend using the official distributions from <a href="https://python.org/downloads/">python.org</a>, you will be unhappy.
+              versions of <code>ssl</code>, <code>zlib</code>, <code>ncurses</code>, etc. These installations can come from HomeBrew, Apt, or god knows what else. For this reason, I do not recommend using the official distributions from <a href="https://python.org/downloads/">python.org</a>, you will be unhappy.
               Fortunately for us, there is an awesome open-source project, <a href="https://github.com/indygreg/python-build-standalone">python-build-standalone</a>, which aims to produce a "self-contained, highly portable" distribution of Python. We'll use this.
            </p>
           
            </p>
-           Let's define our toolchain repositories and then register them with <code>register_toolchains</code> rule.
+           Let's define our toolchain repositories and then register them with the <code>register_toolchains</code> rule.
            </p>
            <pre><code class="language-python"> # WORKSPACE
 workspace(

@@ -40,19 +40,15 @@
             <p><a href="/">Anthony A. Vardaro</a>, Dec 2021</p>
          </div>
          <div class="row">
-            <p>
-               Here's how to quickly bootstrap a hermetic Python toolchain with Bazel.
-            </p>
-         </div>
-         <div class="row">
             <h5>Motivation</h5>
             <p>
                The primary benefit in implementing your own Python toolchain is that it allows you to escape the dreaded autodetecting toolchain that ships with Bazel.  
-               This toolchain is dissapointingly non-hermetic. It depends on the host machines installation of Python, whatever and wherever that might be.  
-               The default autodetecting toolchain attempts to resolve a Python runtime by examining the hosts <code>$PATH</code>, thus damaging reproducibility of Python builds across different host machines. The <code>$PATH</code> variable is flaky as it can be modified by PyEnv, Apt, or whatever random Python you happen to have installed locally. This means two developers building the same target will produce different binaries, which is frustrating. As you can imagine, this becomes the source of numerous Github issues created by developers who don't understand why their builds are not behaving deterministically.
+               This toolchain is not hermetic. It depends on the host machines installation of Python, whatever and wherever that might be.  
+               The autodetecting toolchain depends on the host machines <code>$PATH</code>, which <i>will</i> be different between execution platforms and <i>will</i> cause flakes in what version of Python is running your code. 
             </p>
             <p>
-               The goal here is to implement our own hermetic Python toolchain, so that everyone is on the same page. We'll do this by writing a repository rule that downloads a pinned Python distribution and generates a <code>BUILD.bazel</code> that declares a constrained <code>toolchain</code> target.
+               The goal here is to implement our own hermetic Python toolchain, so that everyone is using the same version of Python for building, testing, and running their code. 
+               We'll do this by writing a repository rule that downloads a pinned Python distribution and generates a <code>BUILD.bazel</code> that declares a constrained <code>toolchain</code> target.
                We'll be working out of this <a href="https://github.com/vardaro/rules_py_simple">example repository</a>.
             </p>
          </div>
@@ -443,7 +439,7 @@ py_download = repository_rule(
               Now that we have a rule that downloads a Python archive and produces toolchain targets, we just need to specify our toolchains in the <code>WORKSPACE</code> file and register them. Before diving in, let's first think about what kind of Python distribution we want to use.
             </p>
             <p>
-              The Python interpreter by its nature has runtime dependencies on the host that do not get shipped with the distribution. This is annoying. It's introduces unnecessary flakiness in our hermetic interpreter, as different host machines will have different
+              The Python interpreter by its nature has runtime dependencies on the host that do not get shipped with the distribution. This is annoying. It introduces unnecessary flakiness in our hermetic toolchain, as different host machines will have different
               versions of <code>ssl</code>, <code>zlib</code>, <code>ncurses</code>, etc. These installations can come from HomeBrew, Apt, or god knows what else. For this reason, I do not recommend using the official distributions from <a href="https://python.org/downloads/">python.org</a>, you will be unhappy.
               Fortunately for us, there is an awesome open-source project, <a href="https://github.com/indygreg/python-build-standalone">python-build-standalone</a>, which aims to produce a "self-contained, highly portable" distribution of Python. We'll use this.
            </p>
@@ -500,7 +496,9 @@ py_binary(
     visibility = ["//visibility:public"],
 )</code></pre>
           <p>
-            Run our binary. It should print <code>3.10.0</code> as the version (which is the one we pinned in the workspace file).
+            Running our binary, it should print <code>3.10.0</code> as the version (which is the one we pinned in the workspace file). And it does!
+            The reason <code>py_binary</code> selects our toolchain instead of the builtin autodetecting one is because we registered our <code>toolchain_type</code> as <code>bazel_tools//tools/python:toolchain_type</code>,
+            which is the type that <code>py_binary</code> natively expects.
           </p>
           <pre><code class="language-shell">$ bazel run bin
 INFO: Analyzed target //:bin (15 packages loaded, 92 targets configured).
@@ -517,10 +515,9 @@ INFO: Build completed successfully, 1 total action
           <div class="row">
             <h5>Done</h5>
             <p>
-              That's it. Hopefully you found <i>something</i> useful here. It's worth noting that a repository rule is not the only way to implement these. The implementation is up to you, and for your use case it could be simple as an <code>http_archive</code> with some patch commands.
-              There are very few open-source implementations of hermetic Python toolchains, which is what motivated me to write. It's something most people will have to implement if they decide to use Bazel.
-              I realize that navigating the Bazel ecosystem can be very daunting. The community is small, you often have to lean on official documentation which can be difficult to understand.
-              As I said earlier in the post, the implementation of this stuff tends to be very straightforward, but the concepts surrounding the implementation are complex. I recommend you look around the <a href="https://github.com/vardaro/rules_py_simple">example repo</a> to help you conceptualize how everything fits together.
+              The learning curve for extending Bazel is steeper than tranditional build systems like Make. Learning how to write effective rules will take some time.
+              As I said earlier in the post, the implementation of this stuff tends to be very straightforward, but the surrounding concepts are complex. 
+              I recommend you look around the <a href="https://github.com/vardaro/rules_py_simple">example repo</a> to help you conceptualize how everything fits together.
             </p>
           </div>
          <!-- footer  -->

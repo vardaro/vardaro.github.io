@@ -41,41 +41,74 @@
          </div>
          <div class="row">
             <p>
-               One of Bazel's most useful features is that it can support any language, allowing you to consolidate the build system into one tool.
-               For small projects, it's <i>whatever</i>.
-               For polyglot monorepos, it's hugely valuable for building targets with multi-language cross-dependencies.
+               One of Bazel's best features is that it can support any language, allowing you to consolidate the build system into one tool.
+               For small projects, it's really not that useful.
+               For polyglot monorepos, it's really valuable for complex multi-language builds.
                This article highlights Bazel's flexibility in extending the build system with custom plugins written in Starlark.
                We'll be doing this to extend Bazel to support Python. Not that Python rules don't exist already, <a href="https://github.com/bazelbuild/rules_python">they do</a>,
                but learning how to extend Bazel is both a valuable skill and kind of fun in small doses.
             </p>
             <p>
-               The goal here is to implement a simple executable rule, <code>py_binary</code>, which produces a Python executable from a set of source files and dependencies.
+               The goal here is to implement the executable <code>py_binary</code> rule, which produces a Python executable from a set of source files and dependencies.
                We'll also implement the <code>py_library</code> rule, for selecting and preparing source files for consumption by <code>py_binary</code> as a dependency.
                Neither of which are particularly difficult to write, but getting familiar with Bazel's evaluation model can be a little tricky.
-               Also, I chose to emphasize writing rules for interpreted languages, like Python, as the process is a little different than writing rules for static, compiled languages.
+               These rules are already built into Bazel's core, and are accessible in the <code>native</code> package, but they are written in Java.
+               There's an <a href="https://opensourcelive.withgoogle.com/events/bazelcon2021?talk=future-of-language-specific-rules-in-bazel">ongoing effort</a> to rewrite these rules, and other builtin rules, in Starlark in the interest of shrinking Bazel's core and welcoming more open-source collaboration.
+               I'm choosing to emphasize writing rules for interpreted languages, like Python, as the process can be a little different than writing rules for static, compiled languages.
                We'll be working out of this <a href="https://github.com/vardaro/rules_py_simple">example repository</a>.
             </p>
          </div>
          <div class="row">
-            <h5>Concepts</h5>
+            <h5>Concepts and Terminology</h5>
             <p>
-               In the simplest terms, a build target is a mapping between a defined set of inputs and a defined set of outputs. 
-               A rule is simply the interface through which the defined are converted into defined outputs.
+               In the simplest terms, a <i>build target</i> is a mapping between a defined set of inputs and a defined set of outputs. 
+               A <i>rule</i> is simply the interface through which inputs are converted into outputs.
                They feel and behave like functions, like you would expect in programming or mathematics.
-               When evaluating a build, Bazel makes clever assumptions on affected inputs to determine which outputs need to be reconstructed.
+               In the implementation of a rule, a series of <i>actions</i> are registered to the action graph and triggered during the execution phase.
+               Actions produce the defineds outputs of a rule, and are used to do things like writing to a file, running a CLI tool, etc.
+               Anything that Starlark itself can't do.
+               When evaluating a build, Bazel can make clever assumptions on affected inputs to determine which outputs need to be reconstructed.
+               It's partly what makes Bazel faster.
             </p>
             <p>
                For interpreted languages, there's nothing to really <i>build</i> per se, as dependency evaluation is deferred to runtime.
-               This is different than languages like Go, where a rule implementation would register an action that wraps <code>go tool compile</code>, or something like that.
-               For interpreted languages, the role of a <code>_binary</code> rule is to construct a runfile tree and provide a bash script to launch the binaries entry.
-               A runfile is a file that a binary expects to be available at runtime.
-               For Python, this is pretty much every <code>.py</code> source file (direct and transitive).
+               It's a little annoying because you won't know if you've goofed the build until <i>after</i> you've built it.
+               The tradeoff is that builds for interpreted languages tend to be faster, as there's fewer things to build and thus fewer actions to run.
+               This is different than languages like Go, where a rule implementation would register actions that wrap <code>go tool compile</code>, or something like that.
+               For interpreted languages, the role of a <code>_binary</code> rule is to construct a runfile tree and provide a bash script to launch the binaries entrypoint.
+               A <i>runfile</i> is a file that a binary expects to be available at runtime.
+               For Python, this is pretty much every <code>.py</code> source file.
             </p>
          </div>
          <div class="row">
-            <h5>Writing our Binary Rule</h5>
+            <h5>Writing a Binary Rule</h5>
             <p>
-               Let's start by giving it a name and some attributes:
+               Let's start by giving it a name:
+            </p>
+            <pre><code class="language-python"> # internal/py_binary.bzl
+def _py_binary_impl(cx):
+   pass
+
+py_binary = rule(
+    implementation = _py_binary_impl,
+    attrs = {},
+    executable = True,
+
+    # You pass a toolchain_type target here.
+    # In this case, we use a builtin toolchain_type that was registered in a previous
+    # blog post: https://www.anthonyvardaro.com/blog/hermetic-python-toolchain-with-bazel
+    toolchains = ["@bazel_tools//tools/python:toolchain_type"],
+    doc = "Builds a Python executable from source files and dependencies.",
+)
+</code></pre>
+            <p>
+               A Bazel rule is going to need <code>srcs</code>, <code>deps</code>, and <code>data</code> attributes, all of which are type <code>label_list</code>.
+               Another useful bit for our usecase is a <code>label</code> attribute to disambiguate which file should be the designated entrypoint, so we'll add a <code>main</code> attribute as well.
+               By passing <code>executable = True</code>, it notifies Bazel that this rule builds an executable, and this rule is compatible with <code>bazel run</code>.
+               The Python toolchain I've configured points to a <code>toolchain_type</code> I configured in a previous blog post, <a href="https://www.anthonyvardaro.com/blog/hermetic-python-toolchain-with-bazel">Hermetic Python Toolchain with Bazel</a>.
+            </p>
+            <p>
+               Let's give our rule some attributes:
             </p>
             <pre><code class="language-python"> # internal/py_binary.bzl
 def _py_binary_impl(cx):
@@ -125,14 +158,12 @@ py_binary = rule(
     toolchains = ["@bazel_tools//tools/python:toolchain_type"],
     doc = "Builds a Python executable from source files and dependencies.",
 )
-</code></pre>
+</pre></code>
             <p>
-               Pretty standard Bazel boilerplate stuff here.
-               The <code>_bash_runner_tpl</code> points to a file that we'll write later in the post.
+               The <code>_bash_runner_tpl</code> points to a file template that we'll write later in the post.
                At build time, our rule is going to register an action to expand said template into a default output of the rule.
-               The <code>_bash_runfile_helper</code> is a Bazel-builtin library that provides a useful Bash function, <code>rlocation</code>, for querying runfiles from a Bash launcher script at runtime.
-               It's <i>sort of</i> documented <a href="https://github.com/bazelbuild/bazel/blob/master/tools/bash/runfiles/runfiles.bash">here</a>.
-               The Python toolchain I've configured points to a <code>toolchain_type</code> I configured in a previous blog post, <a href="https://www.anthonyvardaro.com/blog/hermetic-python-toolchain-with-bazel">Hermetic Python Toolchain with Bazel</a>.
+               The <code>_bash_runfile_helper</code> is a Bazel-builtin library that provides a useful Bash function, <code>rlocation</code>, for querying runfiles from a Bash script.
+               It's loosely documented <a href="https://github.com/bazelbuild/bazel/blob/master/tools/bash/runfiles/runfiles.bash">here</a>.
             </p>
             <p>
                Let's declare our executable:
@@ -153,15 +184,17 @@ def _py_binary_impl(ctx):
             <p>
                As far as binary rules go, this is pretty standard.
                This notifies Bazel that we expect one of the actions registered in this rule to produce a file named after the target.
+               The <code>ctx.actions.declare_file</code> returns a <code>file</code> object that we'd eventually pass to <code>ctx.actions.expand_template</code>.
             </p>
             
             <p>
-               Let's construct our runfile tree:
+               Our rule must be able to aggregate transitive dependency sets, not just the direct dependencies.
+               To do so, we accumulate and merge transitive <code>runfiles</code> objects found in <code>ctx.attr.deps</code>.
             </p>
             <pre><code class="language-python"> # internal/py_binary.bzl
 interpreter = ctx.toolchains["@bazel_tools//tools/python:toolchain_type"].py3_runtime.interpreter
 
-# File targets to be included in runfile object (i.e. the default outputs)
+# File targets to be included in runfile object
 files = [
     ctx.file.main,
     executable,
@@ -173,8 +206,7 @@ files.extend(ctx.files.srcs)
 files.extend(ctx.files.data)
 
 # Merge the current runfiles objects with all of the
-# transitive runfile trees (all of which would return the
-# requested DefaultInfo provider)
+# transitive runfile trees (all of which would return the requested DefaultInfo provider)
 runfiles = ctx.runfiles(files = files)
 runfiles = runfiles.merge_all([
     dep[DefaultInfo].default_runfiles
@@ -182,384 +214,334 @@ runfiles = runfiles.merge_all([
 ])
 </code></pre>
             <p>
-               Here we're constructing a runfile object composed of the interpreter, launcher script, Bash library, and all of the relevant source files known to the target.
+               We're constructing a localized runfile object composed of the files that are immediately relevant to this target, and applying it to transitive runfile tree.
+               This <code>runfiles</code> object gets merged in with a localized <code>runfiles</code> object at every step of the build, until it reaches <code>py_binary</code>, which would be its terminal state.
             </p>
             </p>
-               Because we specified <code>@bazel_tools//tools/python:toolchain_type</code> as a compatible toolchain in the rule definition, we're able to query that toolchain and access the <code>PyRuntimeInfo</code> provider that it returns.
+               Because we specified <code>@bazel_tools//tools/python:toolchain_type</code> as a compatible toolchain in the rule definition, we're able to query that toolchain in <code>ctx.toolchains</code> and access the <code>PyRuntimeInfo</code> provider that it returns.
                This provides us with the <code>filegroup</code> target that points to the <code>python3</code> executable we'll need to launch our binary.
                This also technically means that the Python interpreter itself must be a runfile, hence we include it in the <code>files</code> list.
             </p>
             <p>
-               We construct a new runfiles object and then merge in any transitive runfiles found in the <code>DefaultInfo</code> providers returned by the targets in <code>ctx.attr.deps</code>.
-               To avoid quadratic time and space usage, it's encouraged to use a <code>depset</code> to aggregate transitive dependency sets, as opposed to using a list.
-               A <code>depset</code> is a special purpose data structure unique to Bazel. 
-               It's designed for efficiently merging information accumulated across dependent build targets.
+               The <code>merge_all</code> operation is merging the transitive <code>depset</code> objects found in the <code>DefaultInfo</code> providers in <code>ctx.attr.deps</code>.
+               A <code>depset</code> is used to prevent quadratic time and space usage when aggregating transitive closures.
+               A <code>depset</code> is a special purpose data structure unique to Bazel, it's designed for efficiently merging information accumulated across dependent build targets.
                Their usage is not limited to file targets, you can technically use a <code>depset</code> to manage any kind of information.
-               The general rule of thumb is that for information local to a rule, a list of dict is safe to use, for information passed to other rules via a provider, a <code>depset</code> is preferred.
-            </p>
-
-            <p>
-            We then take our <code>py_runtime</code> and pass it to a <code>py_runtime_pair</code> target. The <code>py_runtime_pair</code> rule is a rule for coupling a Python2 and Python3 runtime into the same toolchain. It returns a <code>ToolchainInfo</code> provider, which is an object propogated to rules that consume this toolchain. Because this is a hermetic Python3 implementation, we can pass <code>None</code> to the <code>py2_runtime</code>.
-            </p>
-
-            <p>
-            Now we can pass our runtime pair to a <code>toolchain</code> target. This target describes a toolchains compatible host and execution platforms, and it's toolchain type. The toolchain type is simply an alias for naming certain kinds of toolchains. You can implement your own <code>toolchain_type</code>, but the one that ships with Bazel is sufficient for us. Again, we are taking advantage of string substitution to inject the compatible OS and CPU constraints.  
-            </p>
-
-            <p>
-            That's pretty much it for our <code>BUILD.bazel</code> file template. Now we can implement our supporting <code>repository_rule</code>.
-            </p>
-         </div>
-
-         <div class="row">
-            <h5>Writing our Repository Rule</h5>
-            <p>
-               For our toolchain, we're going to implement a <a href="https://docs.bazel.build/versions/main/skylark/repository_rules.html">repository_rule</a> that downloads a Python distribution and generates a <code>BUILD.bazel</code> file that describes a toolchain.
+               The general rule of thumb is that for information local to a rule, a <code>list</code> or a <code>dict</code> is safe to use, for information passed to other rules via a provider, a <code>depset</code> is preferred.
             </p>
             <p>
-               Let's describe our repository rule. Let's start by just giving it a name.
+               All that's left to do here is to register an action that creates the executable file we declared earlier.
+               Using string substitution, we'll expand the provided Bash template with information regarding the path to <code>ctx.file.main</code> and the interpreter.
+               The Bash runner will spawn a Python process with the entrypoint, effectively doing something like <code>python3 main.py</code> with the hermetic runtime.
             </p>
-            <pre><code class="language-python"># internal/python_interpreter.bzl
-def _py_download(ctx):
-    """
-    Downloads a Python distribution and registers a toolchain target.
-  
-    Args:
-        ctx: Repository context.
-    """
-    pass
+            <pre><code class="language-python"> # internal/py_binary.bzl
+entrypoint_path = "{workspace_name}/{entrypoint_path}".format(
+    workspace_name = ctx.workspace_name,
+    entrypoint_path = ctx.file.main.short_path,
+ )
+ 
+interpreter_path = interpreter.short_path.replace("../", "")
 
-py_download = repository_rule(
-    implementation = _py_download,
-    attrs = {},
-)</code></pre>
-            <p>
-            The <code>repository_rule</code> function is a special builtin function for declaring a new repository rule. We're describing a new rule, named <code>py_download</code>, which will generate Python toolchain targets from a Python distribution. The <code>implementation</code> argument passes a callback function, <code>_py_download</code>, which implements the rule. The <a href="https://docs.bazel.build/versions/main/skylark/lib/repository_ctx.html">repository context</a> gets passed to the implementation function, which provides an API for handling the non-hermetic operations a repository rule allows you to do.
-               Unlike conventional Bazel rules, repository rules do not have a return value. Their purpose is typically some variation of downloading an archive and generating a <code>BUILD.bazel</code> for it. The <code>attrs</code> argument takes a dictionary
-               describing the attributes of the rule. Right now, it doesn't have any. We're able to call this from <code>WORKSPACE</code> now.
-            </p>
-            <pre><code class="language-python"># WORKSPACE
-workspace(
-    name = "rules_py_simple",
-)
-
-load("@rules_py_simple//internal:python_interpreter.bzl", "py_download")
-
-py_download(
-    name = "my_py_download",
-)</code></pre>
-            <p>
-               Our rule doesn't do anything yet, let's give it some attributes.
-            </p>
-            <pre><code class="language-python"> # internal/python_interpreter.bzl
-def _py_download(ctx):
-    """
-    Downloads a Python distribution and registers a toolchain target.
-  
-    Args:
-        ctx: Repository context.
-    """
-    pass
-
-py_download = repository_rule(
-    implementation = _py_download,
-    attrs = {
-        "urls": attr.string_list(
-            mandatory = True,
-            doc = "String list of mirror URLs where the Python distribution can be downloaded.",
-        ),
-        "sha256": attr.string(
-            mandatory = True,
-            doc = "Expected SHA-256 sum of the archive.",
-        ),
-        "os": attr.string(
-            mandatory = True,
-            values = ["darwin", "linux", "windows"],
-            doc = "Host operating system.",
-        ),
-        "arch": attr.string(
-            mandatory = True,
-            values = ["x86_64"],
-            doc = "Host architecture.",
-        ),
-        "_interpreter_path": attr.string(
-            default = "bin/python3",
-            doc = "Path you'd expect the python interpreter binary to live.",
-        ),
-        "_build_tpl": attr.label(
-            default = "@rules_py_simple//internal:BUILD.dist.bazel.tpl",
-            doc = "Label denoting the BUILD file template that get's installed in the repo.",
-        )
-    },
-)</pre></code>
-            <p>
-              We've created an attribute set for our users to describe their toolchain. All they need to do is provide our rule with a mirror URL, a digest, a target platform, and a target CPU, and our rule can handle the heavy lifting of generating the necessary toolchain bits.
-            </p>
-            <p>
-            The compatible OS platforms that this rule can support are restricted to <code>darwin</code>, <code>linux</code>, and <code>windows</code>. The compatible CPU architectures are restricted to <code>x86_64</code>. Our implementation function should be able to take these flags and generate compatibility constraints for our toolchain.
-            </p>
-            <p>
-              You'll notice the rule comes with the private attributes <code>_interpreter_path</code> and <code>_build_tpl</code>. The <code>_interpreter_path</code> path describes the path to the Python interpreter binary. In most cases, it lives in <code>bin/python3</code>, hence the attributed privacy and default setting. The <code>_build_tpl</code> attribute describes the base template of the injected <code>BUILD.bazel</code>. We wrote our own, but let's give users the option to patch what gets injected in the repository.
-            </p>
-            <p>
-              Let's start implementing our callback function. Let's start by downloading the provided Python mirror URL.
-            </p>
-            <pre><code class="language-python"> # internal/python_interpreter.bzl
-def _py_download(ctx):
-    """
-    Downloads a Python distribution and registers a toolchain target.
-
-    Args:
-        ctx: Repository context.
-    """
-    ctx.report_progress("downloading python")
-    ctx.download_and_extract(
-        url = ctx.attr.urls,
-        sha256 = ctx.attr.sha256,
-        stripPrefix = "python",
-    )
-
-    return None
-</code></pre>
-          <p>
-          Pretty self-explanatory! The <code>repository_ctx</code> object comes pre-baked with a bunch of helper functions that help us achieve what we're trying to do here. In this case we can just give <code>download_and_extract()</code> the mirror URLs and expected digest, and it will extract the Python distribution into the repositores workspace root. 
-          </p>
-          <p>
-            We need to figure out a way to map the values passed in the <code>os</code> and <code>arch</code> attributes to something Bazel can understand.
-            Let's create a simple mapping that maps an attributes value to a Bazel label pointing to a <code>@platforms//</code> target.
-          </p>
-          <pre><code class="language-python"> # internal/python_interpreter.bzl
-_OS_MAP = {
-        "darwin": "@platforms//os:osx",
-        "linux": "@platforms//os:linux",
-        "windows": "@platforms//os:windows",
-}
-
-_ARCH_MAP = {
-        "x86_64": "@platforms//cpu:x86_64",
-}</code></pre>
-          <p>
-          Where do these labels come from? They come shipped with Bazel, but you can find their implementation <a href="https://github.com/bazelbuild/platforms">here</a>. The <code>target_compatible_with</code> and <code>exec_compatible_with</code> attributes of the <code>toolchain</code> will accept these labels, as they return the appropriate providers.
-          </p>
-          <p>
-          Let's go ahead and generate some Starlark code for a label list of platform targets to get injected in the generated build file.
-          </p>
-          <pre><code class="language-python">ctx.report_progress("generating build file")
-os_constraint = _OS_MAP[ctx.attr.os]
-arch_constraint = _ARCH_MAP[ctx.attr.arch]
-
-constraints = [os_constraint, arch_constraint]
-    
-# So Starlark doesn't throw an indentation error when this gets injected.
-constraints_str = ",\n        ".join(['"%s"' % c for c in constraints])
-</code></pre>
-          We're taking our platform labels and generating Starlark code for a list literal. 
-          Since Starlark relies on indentation for scoping blocks of code, we need to prefix the strings with whitespace, ugh. <code>constraints_str</code> will get propogated to the <code>toolchain</code> in the build file, which will end up looking something like this.
-          <pre><code class="language-python"> # Generated BUILD.bazel file
-toolchain(
-    name = "toolchain",
-    exec_compatible_with = [
-	"@platforms//os:osx",
-        "@platforms//cpu:x86_64",
-    ],
-    target_compatible_with = [
-	"@platforms//os:osx",
-        "@platforms//cpu:x86_64",
-    ],
-    toolchain = ":py_runtime_pair",
-    toolchain_type = "@bazel_tools//tools/python:toolchain_type",
-)</code></pre>
-          </p>
-          <p>
-            Now all that's left is templating the <code>BUILD.bazel</code>, which is again made easy by the <code>repository_ctx</code>.
-          </p>
-          <pre><code class="language-python"># Inject our string substitutions into the BUILD file template, and drop said BUILD file in the WORKSPACE root of the repository.
 substitutions = {
-    "{constraints}": constraints_str,
-    "{interpreter_path}": ctx.attr._interpreter_path,
+    "{entrypoint_path}": entrypoint_path,
+    "{interpreter_path}": interpreter_path,
 }
 
-ctx.template(
-    "BUILD.bazel",
-    ctx.attr._build_tpl,
+ctx.actions.expand_template(
+    template = ctx.file._bash_runner_tpl,
+    output = executable,
     substitutions = substitutions,
 )
-
-return None
 </code></pre>
-          <p>
-            That's it! The implementation is very straightforward. I believe the concepts are more difficult to grasp than the implementation, but they are important to know.
-          </p>
-          <p>
-            Here's the entire rule. Let's take a moment to marvel and be amazed, then we'll head over to the <code>WORKSPACE</code> file to test out our new fancy rule.
-          </p>
-          <pre><code class="language-python"># internal/python_interpreter.bzl
-_OS_MAP = {
-        "darwin": "@platforms//os:osx",
-        "linux": "@platforms//os:linux",
-        "windows": "@platforms//os:windows",
-}
-
-_ARCH_MAP = {
-        "x86_64": "@platforms//cpu:x86_64",
-}
-
-def _py_download(ctx):
+         <p>
+            The files path to the Bash launcher must be in the format <code>workspace_name/path</code>. Hence we have chop the <code>../</code> from the interpreter path as the <code>short_path</code> is relative to the runfile root.
+         </p>
+         <p>
+            As a standard Bazel practice our <code>py_binary</code> rule should return a <code>DefaultInfo</code> provider for any rules that consume this one. 
+            <code>_binary</code> targets don't often become dependencies of other rules, but it does happen.
+         </p>
+         <pre><code class="language-python"> # internal/py_binary.bzl
+return [
+  DefaultInfo(
+      executable = executable,
+      runfiles = runfiles,
+  ),
+]
+</code></pre>
+         <p>
+            Our completed <code>py_binary</code> rules looks like:
+         </p>
+         <pre><code class="language-python"> # internal/py_binary.bzl
+def _py_binary_impl(ctx):
     """
-    Downloads a Python distribution and registers a toolchain target.
+    py_binary implementation
+
+    Produces a bash script for launching a Python binary using the toolchain
+    registered in "@bazel_tools//tools/python:toolchain_type".
 
     Args:
-        ctx: Repository context.
+        ctx: Analysis context
     """
-    ctx.report_progress("downloading python")
-    ctx.download_and_extract(
-        url = ctx.attr.urls,
-        sha256 = ctx.attr.sha256,
-        stripPrefix = "python",
+    executable = ctx.actions.declare_file(ctx.label.name)
+    interpreter = ctx.toolchains["@bazel_tools//tools/python:toolchain_type"].py3_runtime.interpreter
+
+    # File targets to be included in runfile object (i.e. the default ouputs)
+    files = [
+        ctx.file.main,
+        executable,
+        interpreter,
+        ctx.file._bash_runfile_helper,
+    ]
+
+    files.extend(ctx.files.srcs)
+    files.extend(ctx.files.data)
+
+    # Merge the current runfiles objects with all of the
+    # transitive runfile trees (all of which would return the
+    # requested DefaultInfo provider)
+    runfiles = ctx.runfiles(files = files)
+    runfiles = runfiles.merge_all([
+        dep[DefaultInfo].default_runfiles
+        for dep in ctx.attr.deps
+    ])
+
+    entrypoint_path = "{workspace_name}/{entrypoint_path}".format(
+        workspace_name = ctx.workspace_name,
+        entrypoint_path = ctx.file.main.short_path,
     )
     
-    ctx.report_progress("generating build file") 
-    os_constraint = _OS_MAP[ctx.attr.os]
-    arch_constraint = _ARCH_MAP[ctx.attr.arch]
+    interpreter_path = interpreter.short_path.replace("../", "")
 
-    constraints = [os_constraint, arch_constraint]
-    
-    # So Starlark doesn't throw an indentation error when this gets injected.
-    constraints_str = ",\n        ".join(['"%s"' % c for c in constraints])
-
-    # Inject our string substitutions into the BUILD file template, and drop said BUILD file in the WORKSPACE root of the repository.
     substitutions = {
-        "{constraints}": constraints_str,
-        "{interpreter_path}": ctx.attr._interpreter_path,
+        "{entrypoint_path}": entrypoint_path,
+        "{interpreter_path}": interpreter_path,
     }
 
-    ctx.template(
-        "BUILD.bazel",
-        ctx.attr._build_tpl,
+    ctx.actions.expand_template(
+        template = ctx.file._bash_runner_tpl,
+        output = executable,
         substitutions = substitutions,
     )
 
-    return None
+    return [
+        DefaultInfo(
+            executable = executable,
+            runfiles = runfiles,
+        ),
+    ]
 
-py_download = repository_rule(
-    implementation = _py_download,
+py_binary = rule(
+    implementation = _py_binary_impl,
     attrs = {
-        "urls": attr.string_list(
+        "srcs": attr.label_list(
+            allow_files = True,
+            doc = "Source files to compile",
+        ),
+        "deps": attr.label_list(
+            doc = "Direct dependencies of the binary",
+        ),
+        "data": attr.label_list(
+            allow_files = True,
+            doc = "Data files available to binary at runtime",
+        ),
+
+        # This doesn't really need to be mandatory, I'm choosing to do so to keep the example simple.
+        "main": attr.label(
+            allow_single_file = True,
             mandatory = True,
-            doc = "String list of mirror URLs where the Python distribution can be downloaded.",
+            doc = "Label denoting the entrypoint of the binary",
         ),
-        "sha256": attr.string(
-            mandatory = True,
-            doc = "Expected SHA-256 sum of the archive.",
+
+        # Our rule is going to register an action to expand whatever template this attribute points to.
+        "_bash_runner_tpl": attr.label(
+            default = "@rules_py_simple//internal:py_binary_runner.bash.tpl",
+            doc = "Label denoting the bash runner template to use for the binary",
+            allow_single_file = True,
         ),
-        "os": attr.string(
-            mandatory = True,
-            values = ["darwin", "linux", "windows"],
-            doc = "Host operating system.",
+
+        # Bazel ships with a useful bash function for querying the absolute path to runfiles at runtime.
+        "_bash_runfile_helper": attr.label(
+            default = "@bazel_tools//tools/bash/runfiles",
+            doc = "Label pointing to bash runfile helper",
+            allow_single_file = True,
         ),
-        "arch": attr.string(
-            mandatory = True,
-            values = ["x86_64"],
-            doc = "Host architecture.",
-        ),
-        "_interpreter_path": attr.string(
-            default = "bin/python3",
-            doc = "Path you'd expect the python interpreter binary to live.",
-        ),
-        "_build_tpl": attr.label(
-            default = "@rules_py_simple//internal:BUILD.dist.bazel.tpl",
-            doc = "Label denoting the BUILD file template that get's installed in the repo.",
-        )
     },
-)</code></pre>
+    executable = True,
+
+    # You pass a toolchain_type target here.
+    # In this case, we use a builtin toolchain_type that was registered in a previous
+    # blog post: https://www.anthonyvardaro.com/blog/hermetic-python-toolchain-with-bazel
+    toolchains = ["@bazel_tools//tools/python:toolchain_type"],
+    doc = "Builds a Python executable from source files and dependencies.",
+)
+</code></pre>
          </div>
          <div class="row">
-           <h5>Using our Repository Rule and Registering the Toolchain</h5>
-           <p>
-              Now that we have a rule that downloads a Python archive and produces toolchain targets, we just need to specify our toolchains in the <code>WORKSPACE</code> file and register them. Before diving in, let's first think about what kind of Python distribution we want to use.
-            </p>
+            <h5>Writing the Bash Launcher</h5>
             <p>
-              The Python interpreter by its nature has runtime dependencies on the host that do not get shipped with the distribution. This is annoying. It introduces unnecessary flakiness in our hermetic toolchain, as different host machines will have different
-              versions of <code>ssl</code>, <code>zlib</code>, <code>ncurses</code>, etc. These installations can come from HomeBrew, Apt, or god knows what else. For this reason, I do not recommend using the official distributions from <a href="https://python.org/downloads/">python.org</a>, you will be unhappy.
-              Fortunately for us, there is an awesome open-source project, <a href="https://github.com/indygreg/python-build-standalone">python-build-standalone</a>, which aims to produce a "self-contained, highly portable" distribution of Python. We'll use this.
-           </p>
-          
-           </p>
-           Let's define our toolchain repositories and then register them with the <code>register_toolchains</code> rule.
-           </p>
-           <pre><code class="language-python"> # WORKSPACE
-workspace(
-    name = "rules_py_simple",
-)
+               We need implement the Bash template specified in the <code>_bash_runner_tpl</code> attribute of our <code>py_binary</code>.
+               Using <code>@bazel_tools//tools/bash/runfiles</code>, it's a pretty easy one-liner using the <code>rlocation</code> function.
+            </p>
+            <pre><code class="language-bash"># internal/py_binary_runner.bash.tpl
+#!/usr/bin/env bash
 
-load("@rules_py_simple//internal:python_interpreter.bzl", "py_download")
+# --- begin runfiles.bash initialization v2 ---
+# Copy-pasted from the Bazel Bash runfiles library v2.
+set -uo pipefail; f=bazel_tools/tools/bash/runfiles/runfiles.bash
+source "${RUNFILES_DIR:-/dev/null}/$f" 2>/dev/null || \
+source "$(grep -sm1 "^$f " "${RUNFILES_MANIFEST_FILE:-/dev/null}" | cut -f2- -d' ')" 2>/dev/null || \
+source "$0.runfiles/$f" 2>/dev/null || \
+source "$(grep -sm1 "^$f " "$0.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/null || \
+source "$(grep -sm1 "^$f " "$0.exe.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/null || \
+  { echo>&2 "ERROR: cannot find $f"; exit 1; }; f=; set -e
+# --- end runfiles.bash initialization v2 ---
 
-py_download(
-    name = "py_darwin_x86_64",
-    arch = "x86_64",
-    os = "darwin",
-    sha256 = "fc0d184feb6db61f410871d0660d2d560e0397c36d08b086dfe115264d1963f4",
-    urls = ["https://github.com/indygreg/python-build-standalone/releases/download/20211017/cpython-3.10.0-x86_64-apple-darwin-install_only-20211017T1616.tar.gz"],
-)
-
-py_download(
-    name = "py_linux_x86_64",
-    arch = "x86_64",
-    os = "linux",
-    sha256 = "eada875c9b39cc4bf4a055dd8f5188e99c0c90dd5deb05b6c213f49482fe20a6",
-    urls = ["https://github.com/indygreg/python-build-standalone/releases/download/20211017/cpython-3.10.0-x86_64-unknown-linux-gnu-install_only-20211017T1616.tar.gz"],
-)
-
-# The //:toolchain target points to the toolchain target we wrote in the BUILD file template.
-register_toolchains(
-    "@py_darwin_x86_64//:toolchain",
-    "@py_linux_x86_64//:toolchain",
-)</code></pre>
-           <p>
-            Our <code>py_download</code> rule generates Bazel repositories for each toolchain, which we can then pass to <code>register_toolchains</code>. At runtime, Bazel will evaluate the host and execution platforms, and select the correct toolchain to bundle with target you're trying to build.
-           </p>
-           <p>
-            Let's do a quick test to see if everything works properly. Let's write a program that simply prints the version of its runtime.
-           </p>
-           <pre><code class="language-python"> # bin.py
-import sys
-
-print(sys.version)
+$(rlocation "{interpreter_path}") $(rlocation "{entrypoint_path}") "@"
 </code></pre>
-          <p>
-            Write a <code>py_binary</code> target for it.
-          <p>
-          <pre><code class="language-python"> # BUILD.bazel
-py_binary(
-    name = "bin",
-    srcs = ["bin.py"],
+            <p>
+            The first bit is just some boilerplate needed to source the <code>runfiles.bash</code> library, copied from <a href="https://github.com/bazelbuild/bazel/blob/68ffdd2784caea06f8d3554cc09991cb6197b53e/tools/bash/runfiles/runfiles.bash#L48-L63">here</a>.
+            Using <code>rlocation</code> we can query the absolute path of <code>interpreter_path</code> and <code>entrypoint_path</code> templated by our <code>py_binary</code>.
+            After string substitution, that line of code will looks something like this:
+            </p>
+            <pre><code class="language-bash">$(rlocation "py_darwin_x86_64/bin/python3") $(rlocation "rules_py_simple/tests/py_binary/src_files_test/src_files_test.py") "@"</code></pre>
+         </div>
+         <div class="row">
+            <h5>Writing a Library Rule</h5>
+            <p>
+            After writing <code>py_binary</code>, writing <code>py_library</code> becomes trivial.
+            A <code>py_library</code> rule here doesn't necessarily improve build times. 
+            However, when you decide to support dependencies with C bindings (like <code>scipy</code>), being able to build them incrementally will be useful.
+            </p>
+            <pre><code class="language-python"> # internal/py_library.bzl
+def _py_library_impl(ctx):
+    """
+    py_library implementation
+
+    Returns runfile tree for consumption via py_binary
+
+    Args:
+        ctx: Analysis context
+    """
+    files = ctx.files.srcs + ctx.files.data
+
+    runfiles = ctx.runfiles(files = files)
+    runfiles = runfiles.merge_all([
+        dep[DefaultInfo].default_runfiles
+        for dep in ctx.attr.deps
+    ])
+
+    return [
+        DefaultInfo(
+            runfiles = runfiles,
+        ),
+    ]
+
+py_library = rule(
+    implementation = _py_library_impl,
+    attrs = {
+        "srcs": attr.label_list(
+            allow_files = True,
+            doc = "Source files to compile",
+        ),
+        "deps": attr.label_list(
+            doc = "Direct dependencies of the library",
+        ),
+        "data": attr.label_list(
+            allow_files = True,
+            doc = "Data files available to the library",
+        ),
+    },
+    doc = "Returns runfile tree for consumption via py_binary",
+)
+</code></pre>
+            <p>
+               The <code>py_library</code> rule isn't doing anything <code>py_binary</code> doesn't do already.
+               It's capturing the transitive <code>runfiles</code> objects, merging it with a localized one, and passing it onward via the <code>DefaultInfo</code> provider.
+               Technically this rule has no artifacts, meaning if you ran <code>bazel build</code> on a <code>py_library</code> target, nothing would happen.
+               This rule just collects and propogates information to <code>py_binary</code>.
+               If you wanted to get fancy, you could write your own custom provider that this rule returns, allowing you to pass custom build metadata across targets.
+               A benefit of using <code>py_library</code> (as opposed to globbing everything in one target), is that it granulates the build graph, allowing Bazel to make more effective caching assumptions at build time.
+               For interpreted languages, incremental builds are not particularly useful unless you're building dependencies with complex actions.
+            </p>
+         </div>
+         <div class="row">
+            <h5>Using Our Rules to Build a Target</h5>
+            <p>
+               To test that everything works together, let's put together a small app that imports a small Python library.
+               Using the Bazel rules we wrote, we can write build targets to articulate the dependency graph of the project and build our app.
+            </p>
+
+            <p>
+               Let's put together a small library that exports a single function:
+            </p>
+            <pre><code class="language-python"> # tests/py_binary/app/lib/lib.py
+def foo():
+    return "foo"
+</code></pre>
+            <pre><code class="language-python"> # tests/py_binary/apps/lib/__init__.py
+from .lib import foo
+</code></pre>
+            <p>
+               And build it with the <code>py_libary</code> we wrote:
+            </p>
+            <pre><code class="language-python"> # tests/py_binary/app/lib/BUILD.bazel
+load("@rules_py_simple//:defs.bzl", "py_library")
+
+py_library(
+    name = "lib",
+    srcs = [
+        "__init__.py",
+        "lib.py",
+    ],
     visibility = ["//visibility:public"],
-)</code></pre>
-          <p>
-            Running our binary, it should print <code>3.10.0</code> as the version (which is the one we pinned in the workspace file). And it does!
-            The reason <code>py_binary</code> selects our toolchain instead of the builtin autodetecting one is because we registered our <code>toolchain_type</code> as <code>bazel_tools//tools/python:toolchain_type</code>,
-            which is the type that <code>py_binary</code> natively expects.
-          </p>
-          <pre><code class="language-shell">$ bazel run bin
-INFO: Analyzed target //:bin (15 packages loaded, 92 targets configured).
+)
+</code></pre>
+            <p>
+               And a small app that imports the library...
+            </p>
+            <pre><code class="language-python"> # tests/py_binary/app/app.py
+import sys
+import lib
+
+if __name__ == "__main__":
+    print("runtime: ", sys.version)
+    print("lib.foo(): ",  lib.foo())
+</code></pre>
+            <p>
+               And the <code>py_binary</code> target for it:
+            </p>
+            <pre><code class="language-python"> # tests/py_binary/app/BUILD.bazel
+load("@rules_py_simple//:defs.bzl", "py_binary")
+
+py_binary(
+    name = "app",
+    main = "app.py",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@rules_py_simple//tests/py_binary/app/lib",
+    ],
+)
+</code></pre>
+         <p>
+            Building our target produces the <code>app</code> artifact, which is the Bash launcher we wrote.
+         </p>
+         <pre><code class="language-bash">$ bazel build //tests/py_binary/app
+INFO: Analyzed target //tests/py_binary/app:app (0 packages loaded, 0 targets configured).
 INFO: Found 1 target...
-Target //:bin up-to-date:
-  bazel-bin/bin
-INFO: Elapsed time: 0.531s, Critical Path: 0.00s
+Target //tests/py_binary/app:app up-to-date:
+  bazel-bin/tests/py_binary/app/app
+INFO: Elapsed time: 0.088s, Critical Path: 0.00s
 INFO: 1 process: 1 internal.
 INFO: Build completed successfully, 1 total action
-INFO: Build completed successfully, 1 total action
-3.10.0 (default, Oct 18 2021, 00:33:47) [Clang 13.0.0 ]
 </code></pre>
-          </div>
-          <div class="row">
-            <h5>Done</h5>
-            <p>
-              The learning curve for extending Bazel is steeper than tranditional build systems like Make. Learning how to write effective rules will take some time.
-              As I said earlier in the post, the implementation of this stuff tends to be very straightforward, but the surrounding concepts are complex. 
-              I recommend you look around the <a href="https://github.com/vardaro/rules_py_simple">example repo</a> to help you conceptualize how everything fits together.
-            </p>
-          </div>
+         <p>
+            Running the binary, things work like expected:
+         </p>
+         <pre><code class="language-bash">$ bazel-bin/tests/py_binary/app/app
+runtime:  3.10.0 (main, Feb 27 2022, 08:13:44) [Clang 13.0.1 ]
+lib.foo():  foo
+</code></pre>
+         </div>
          <!-- footer  -->
          <div class="contact">
             <span class="contact-link">

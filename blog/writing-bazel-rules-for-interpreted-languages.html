@@ -41,9 +41,8 @@
          </div>
          <div class="row">
             <p>
-               One of Bazel's best features is that it can support any language, allowing you to consolidate the build system into one tool.
-               For small projects, it's not very useful.
-               For polyglot monorepos, it's really valuable for complex multi-language builds.
+               One of Bazel's greatest features is that it can support any language, allowing you to consolidate the build system into one tool.
+               For big monorepos, it's really valuable for complex multi-language builds.
                This article highlights Bazel's flexibility in extending the build system with custom plugins written in Starlark.
                We'll be doing this to extend Bazel to support Python. 
                Not that Python rules don't exist already, <a href="https://github.com/bazelbuild/rules_python">they do</a>, but learning how to extend Bazel is both a valuable skill and kind of fun in small doses.
@@ -67,7 +66,7 @@
                Actions produce the defined outputs of a rule, and are used to do things like writing to a file, running a CLI tool, etc.
                Anything that Starlark itself can't do.
                When evaluating a build, Bazel can make clever assumptions on affected inputs to determine which outputs need to be reconstructed.
-               It's partly what makes Bazel faster.
+               It's partly what makes Bazel fast.
             </p>
             <p>
                For interpreted languages, there's nothing to really <i>build</i> per se, as dependency evaluation is deferred to runtime.
@@ -186,7 +185,7 @@ def _py_binary_impl(ctx):
                The <code>ctx.actions.declare_file</code> returns a <code>file</code> object that we'd eventually pass to <code>ctx.actions.expand_template</code>.
             </p>
             <p>
-               Our rule must be able to aggregate transitive dependency sets, not just the direct ones.
+               Our rule must be able to aggregate transitive dependencies, not just the direct ones.
                To do so, we accumulate and merge transitive <code>runfiles</code> objects found in <code>ctx.attr.deps</code>.
             </p>
             <pre><code class="language-python"> # internal/py_binary.bzl
@@ -223,12 +222,12 @@ runfiles = runfiles.merge_all([
             <p>
                The <code>merge_all</code> operation is merging the transitive <code>depset</code> objects found in the <code>DefaultInfo</code> providers in <code>ctx.attr.deps</code>.
                A <code>depset</code> is used to prevent quadratic time and space usage when aggregating transitive closures.
-               A <code>depset</code> is a special purpose data structure unique to Bazel, it's designed for efficiently merging information accumulated across dependent build targets.
+               It's a special purpose data structure unique to Bazel, designed for efficiently merging information accumulated across dependent build targets.
                Their usage is not limited to file targets, you can technically use a <code>depset</code> to manage any kind of information.
                The general rule of thumb is that for information local to a rule, a <code>list</code> or a <code>dict</code> is safe to use, for information passed to other rules via a provider, a <code>depset</code> is preferred.
             </p>
             <p>
-               All that's left to do here is to register an action that creates the executable file we declared earlier.
+               All that's left to do is to register an action that creates the executable file we declared earlier.
                Using string substitution, we'll expand the provided Bash template with information regarding the path to <code>ctx.file.main</code> and the interpreter.
                The Bash runner will spawn a Python process with the entrypoint, effectively doing something like <code>python3 main.py</code> with the hermetic runtime.
             </p>
@@ -398,7 +397,7 @@ source "$(grep -sm1 "^$f " "$0.exe.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/
 $(rlocation "{interpreter_path}") $(rlocation "{entrypoint_path}") "@"
 </code></pre>
             <p>
-            The first bit is just some boilerplate needed to source the <code>runfiles.bash</code> library, copied from <a href="https://github.com/bazelbuild/bazel/blob/68ffdd2784caea06f8d3554cc09991cb6197b53e/tools/bash/runfiles/runfiles.bash#L48-L63">here</a>.
+            The first bit is boilerplate needed to source the <code>runfiles.bash</code> library, copied from <a href="https://github.com/bazelbuild/bazel/blob/68ffdd2784caea06f8d3554cc09991cb6197b53e/tools/bash/runfiles/runfiles.bash#L48-L63">here</a>.
             Using <code>rlocation</code> we can query the absolute path of <code>interpreter_path</code> and <code>entrypoint_path</code> templated by our <code>py_binary</code>.
             After string substitution, that line of code will look something like this:
             </p>
@@ -460,7 +459,7 @@ py_library = rule(
                This rule just collects and propogates information to <code>py_binary</code>.
                If you wanted to get fancy, you could write your own custom provider that this rule returns, allowing you to pass custom build metadata across targets.
                A benefit of using <code>py_library</code> (as opposed to globbing everything in one target), is that it granulates the build graph, allowing Bazel to make more effective caching assumptions at build time.
-               For interpreted languages, incremental builds are not particularly useful unless you're building dependencies with complex actions.
+               For interpreted languages, incremental builds are not particularly useful unless you're building dependencies that require expensive actions.
             </p>
          </div>
          <div class="row">

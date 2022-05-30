@@ -42,9 +42,11 @@
          <div class="row">
             <p>
                One of Bazel's greatest features is that it can support any language, allowing you to consolidate the build system into one tool.
-               For big monorepos, it's really valuable for complex multi-language builds.
+               For big monorepos, it's extremely valuable for complex multilingual builds.
                This article highlights Bazel's flexibility in extending the build system with custom plugins written in Starlark.
-               We'll be doing this to extend Bazel to support Python. 
+               <a href="https://docs.bazel.build/versions/main/skylark/rules.html">Rules</a> are build-time handlers responsible for registering the <a href="https://docs.bazel.build/versions/main/skylark/rules.html#actions">actions</a> that ultimately produce pre-defined build outputs.
+               They are the functional intermediary between source code and build artifacts.
+               We'll be writing custom rules to extend Bazel to support Python. 
                Not that Python rules don't exist already, <a href="https://github.com/bazelbuild/rules_python">they do</a>, but learning how to extend Bazel is both a valuable skill and kind of fun in small doses.
             </p>
             <p>

@@ -42,7 +42,7 @@
          <div class="row">
             <p>
                One of Bazel's greatest features is that it can support any language, allowing you to consolidate the build system into one tool.
-               For big monorepos, it's extremely valuable for complex multilingual builds.
+               For big monorepos, it's incredibly useful for building complex, multilingual projects.
                This article highlights Bazel's flexibility in extending the build system with custom plugins written in Starlark.
                <a href="https://docs.bazel.build/versions/main/skylark/rules.html">Rules</a> are build-time handlers responsible for registering the <a href="https://docs.bazel.build/versions/main/skylark/rules.html#actions">actions</a> that ultimately produce pre-defined build outputs.
                They are the functional intermediary between source code and build artifacts.
@@ -71,7 +71,7 @@
                It's partly what makes Bazel fast.
             </p>
             <p>
-               For interpreted languages, there's nothing to really <i>build</i> per se, as dependency evaluation is deferred to runtime.
+               For interpreted languages, there's nothing to really <i>build</i> per se, as most things are deferred to runtime.
                It's a little annoying because you won't know if you've goofed the build until <i>after</i> you've built it.
                The tradeoff is that builds for interpreted languages tend to be faster, as there's fewer things to "build" and thus fewer actions to run.
                This is different than languages like Go, where a rule implementation would register actions that wrap <code>go tool compile</code>, or something like that.

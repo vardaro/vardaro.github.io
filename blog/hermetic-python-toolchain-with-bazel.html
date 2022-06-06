@@ -42,9 +42,8 @@
          <div class="row">
             <h5>Motivation</h5>
             <p>
-               The primary benefit in implementing your own Python toolchain is that it allows you to escape the dreaded autodetecting toolchain that ships with Bazel.  
-               This toolchain is not hermetic. It depends on the host machines installation of Python, whatever and wherever that might be.  
-               The autodetecting toolchain depends on the host machines <code>$PATH</code>, which <i>will</i> be different between execution platforms and <i>will</i> cause flakes in what version of Python is running your code. 
+               The benefit in implementing your own Python toolchain is that it allows you to escape the dreaded autodetecting toolchain that ships with Bazel.  
+               This toolchain isn't hermetic as it depends on the host machines installation of Python, usually by observing what's in <code>$PATH</code>.  
             </p>
             <p>
                The goal here is to implement our own hermetic Python toolchain, so that everyone is using the same version of Python for building, testing, and running their code. 

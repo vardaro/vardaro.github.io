@@ -1,11 +1,15 @@
 body {
     -webkit-font-smoothing: antialiased;
-    font-size: 1.3rem;
+    font-size: 16px;
     color: rgb(35, 31, 32);
     margin-bottom: 50px;
 
     font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
     line-height: 1.5;
+}
+
+.container > p {
+    width: 640px;
 }
 
 code {
@@ -33,12 +37,11 @@ h3 {
     margin-top: 50px;
     margin-bottom: 50px;
     letter-spacing: 3px;
-    font-weight: 50;
-    font-size: 1.5rem;
+    font-size: 18px;
 }
 
 .namespace > .subtitle {
-    font-size: 1rem;
+    font-size: 14px;
     font-weight: 0;
     color: gray;
 }
@@ -58,6 +61,7 @@ a:hover {
 #home-title {
     margin-top: 8rem;
     color: #000;
+    font-weight: bold;
 }
 
 .contact-link {

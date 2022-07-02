@@ -46,10 +46,17 @@
          <div class="row">
             <h5>Concepts and Terminology</h5>
             <p>
-               If you're not familiar with Bazels toolchain ecosystem, the official documentation on <a href="https://docs.bazel.build/versions/main/toolchains.html">Toolchains</a> and <a href="https://docs.bazel.build/versions/main/platforms.html">Platforms</a> are worth your time.
+               If you're not familiar with Bazels toolchain ecosystem, the official documentation on <a href="https://docs.bazel.build/versions/main/toolchains.html">Toolchains</a> and <a href="https://docs.bazel.build/versions/main/platforms.html">Platforms</a> are definetly worth your time.
             </p>
             <p>
-               A <i>platform</i> is a named collection of system constraints that describe where code is intended to run. This is done by creating a <code><a href="https://docs.bazel.build/versions/main/be/platform.html#platform">platform</a></code> rule. At runtime, Bazel identifies three platform targets which serve different purposes. The <i>host platform</i> is the platform on which Bazel is running. For me, it'd be my laptop. The <i>execution platform</i> is the platform that Bazel executes <a href="https://docs.bazel.build/versions/main/skylark/lib/Action.html">actions</a> on. For me, it's still my laptop. If I were to use remote execution, the execution platform would be the platform of the execution environment, the host platform would still be my laptop. The <i>target platform</i> is the platform in which the final build is intended to run. If I were cross-compiling a target from a darwin host machine to a linux container, the host platform would be my laptop and the target platform would be the linux container.
+               A <i>platform</i> is a named collection of system constraints that describe where code is intended to run. 
+               This is done by creating a <code><a href="https://docs.bazel.build/versions/main/be/platform.html#platform">platform</a></code> rule. 
+               At runtime, Bazel identifies three platform targets which serve different purposes. 
+               The <i>host platform</i> is the platform on which Bazel is running.
+               The <i>execution platform</i> is the platform that Bazel executes <a href="https://docs.bazel.build/versions/main/skylark/lib/Action.html">actions</a> on.
+               The <i>target platform</i> is the platform in which the final build is intended to run. 
+               How does this fit together?
+               If I were using remote execution to compile a target from a darwin host machine for a linux container, the host platform would be my laptop, the execution platform would be the remote execution environment, and the target platform would be the linux container.
             </p>
             <p>
                A <i>constraint</i> is an individual criteria that a platform must satisfy. Remember, a platform is simply a named collection of these constraints. Constraints allow you to add cardinality to your platform definitions. Bazel ships with <a href="https://github.com/bazelbuild/platforms">predefined platform definitions</a>, which is what we'll be using here.
@@ -342,87 +349,8 @@ return None
             That's it! The implementation is very straightforward. I believe the concepts are more difficult to grasp than the implementation, but they are important to know.
           </p>
           <p>
-            Here's the entire rule. Let's take a moment to marvel and be amazed, then we'll head over to the <code>WORKSPACE</code> file to test out our new fancy rule.
+            You can find the entire implementation <a href="https://github.com/vardaro/rules_py_simple/blob/master/internal/python_interpreter.bzl">here</a>.
           </p>
-          <pre><code class="language-python"># internal/python_interpreter.bzl
-_OS_MAP = {
-        "darwin": "@platforms//os:osx",
-        "linux": "@platforms//os:linux",
-        "windows": "@platforms//os:windows",
-}
-
-_ARCH_MAP = {
-        "x86_64": "@platforms//cpu:x86_64",
-}
-
-def _py_download(ctx):
-    """
-    Downloads a Python distribution and registers a toolchain target.
-
-    Args:
-        ctx: Repository context.
-    """
-    ctx.report_progress("downloading python")
-    ctx.download_and_extract(
-        url = ctx.attr.urls,
-        sha256 = ctx.attr.sha256,
-        stripPrefix = "python",
-    )
-    
-    ctx.report_progress("generating build file") 
-    os_constraint = _OS_MAP[ctx.attr.os]
-    arch_constraint = _ARCH_MAP[ctx.attr.arch]
-
-    constraints = [os_constraint, arch_constraint]
-    
-    # So Starlark doesn't throw an indentation error when this gets injected.
-    constraints_str = ",\n        ".join(['"%s"' % c for c in constraints])
-
-    # Inject our string substitutions into the BUILD file template, and drop said BUILD file in the WORKSPACE root of the repository.
-    substitutions = {
-        "{constraints}": constraints_str,
-        "{interpreter_path}": ctx.attr._interpreter_path,
-    }
-
-    ctx.template(
-        "BUILD.bazel",
-        ctx.attr._build_tpl,
-        substitutions = substitutions,
-    )
-
-    return None
-
-py_download = repository_rule(
-    implementation = _py_download,
-    attrs = {
-        "urls": attr.string_list(
-            mandatory = True,
-            doc = "String list of mirror URLs where the Python distribution can be downloaded.",
-        ),
-        "sha256": attr.string(
-            mandatory = True,
-            doc = "Expected SHA-256 sum of the archive.",
-        ),
-        "os": attr.string(
-            mandatory = True,
-            values = ["darwin", "linux", "windows"],
-            doc = "Host operating system.",
-        ),
-        "arch": attr.string(
-            mandatory = True,
-            values = ["x86_64"],
-            doc = "Host architecture.",
-        ),
-        "_interpreter_path": attr.string(
-            default = "bin/python3",
-            doc = "Path you'd expect the python interpreter binary to live.",
-        ),
-        "_build_tpl": attr.label(
-            default = "@rules_py_simple//internal:BUILD.dist.bazel.tpl",
-            doc = "Label denoting the BUILD file template that get's installed in the repo.",
-        )
-    },
-)</code></pre>
          </div>
          <div class="row">
            <h5>Using our Repository Rule and Registering the Toolchain</h5>

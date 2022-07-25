@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <!-- Basic Page Needs
+         –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+      <meta charset="utf-8" />
+      <title>Multi-Monorepo</title>
+      <meta name="description" content="Anthony Vardaro, Software engineer" />
+      <meta name="author" content="Anthony Vardaro" />
+      <!-- Mobile Specific Metas
+         –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <!-- CSS
+         –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+      <link rel="stylesheet" href="../css/normalize.css" />
+      <link rel="stylesheet" href="../css/skeleton.css" />
+      <link rel="stylesheet" href="../css/custom.css" />
+      <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/styles/default.min.css">
+      <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/highlight.min.js"></script>
+      <script>
+         hljs.initHighlightingOnLoad();
+      </script>
+      
+      <script defer data-domain="anthonyvardaro.com" src="https://plausible.io/js/plausible.js"></script>
+ 
+   </head>
+   <body>
+      <div class="container blog-content">
+         <div class="row">
+            <h4 id="home-title">Multi-Monorepo</h4>
+            <p><a href="/">Anthony A. Vardaro</a>, Apr 2022</p>
+         </div>
+         <div class="row">
+            <p>
+               At Datadog, I spend a lot of time working in (and on) our monorepos.
+               We have a monorepo for Go, one for Java, and one for Python.
+               Additionally, we have another monorepo for hosting all three, a polyglot.
+               We have what I like to call a <i>Multi-Monorepo</i> setup.
+            </p>
+            <p>
+               I don't think this is unique to Datadog.
+               I would guess that many companies at Datadog's size also have a multi-monorepo.
+               It's a healthy side-effect of hypergrowth.
+               Companies at this scale want to optimize developer productivity, and look toward a monorepo as a means to do so.
+               A well-managed monorepo can be key to unlocking unprecedented levels of productivity in an engineering organization.
+            </p>
+            <p>
+               A multi-monorepo setup is not a bad thing; it's an unfortunate reality of migrating from multirepo to monorepo. 
+               The organization spends significant time living somewhere in-between.
+               Most of my time at Datadog has been spent living in-between.
+               As such, I've had the unique opportunity to experience the unbelievable headache a multi-monorepo setup imposes.
+            </p>
+            <p>
+               The discourse on multirepo vs. monorepo is superfluous.
+               Both have been done successfully in large organizations.
+               The organizations that benefit the most from their repo setup are the ones that pick one and completely commit to it.
+               Oftentimes, curiosity leads companies into partially attempting a monorepo, struggling to identify the value added, and sometimes giving up.
+               The remnants of this create a multi-monorepo setup.
+            </p>
+            <p>
+               I think companies attempt a multi-monorepo as a means to capture the benefits of both.
+               In practice, you inherit the worst parts of a monorepo and a multirepo.
+               For example, in a monorepo, you need some kind of a change detection layer in your CI, to determine which services must be redeployed when a change lands.
+               This is a non-issue in a multirepo, your deployments are already well-divided by repo.
+               Alternatively, in a multirepo, you need some kind way to package and synchronize shared code to downstream consumers—other repos in the service graph.
+               Likewise, this is a non-issue in a monorepo, because your shared libraries and protos all live in one place.
+               In a multi-monorepo, you have to solve both.
+            </p>
+            <p>
+               Can a multi-monorepo be successful?
+               I think Datadog does a good job at striking a balance between the two.
+               That being said, the real value proposition in a repo setup is found by choosing one and committing to it, not by trying to do both.
+               By choosing one, you isolate your problem space, giving you more freedom to establish common practices.
+               If you can establish common practices for software primitives (build, test, release, etc), then it ultimately doesn't matter where the underyling code lives.
+               Even a multi-monorepo can somewhat succeed under these conditions.
+            </p>
+         </div>
+         <!-- footer  -->
+         <div class="contact">
+            <span class="contact-link">
+            <a target="_blank" href="https://github.com/vardaro">Github</a>
+            </span>
+            <span class="contact-link">
+            <a target="_blank" href="mailto:me@anthonyvardaro.com">Email</a>
+            </span>
+            <span class="contact-link">
+            <a target="_blank" href="https://www.linkedin.com/in/anthony-vardaro-27a070138/">LinkedIn</a>
+            </span>
+         </div>
+      </div>
+   </body>
+</html>

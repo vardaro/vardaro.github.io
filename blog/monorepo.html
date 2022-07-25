@@ -54,11 +54,11 @@
                The discourse on multirepo vs. monorepo is superfluous.
                Both have been done successfully in large organizations.
                The organizations that benefit the most from their repo setup are the ones that pick one and completely commit to it.
-               Oftentimes, curiosity leads companies into partially attempting a monorepo, struggling to identify the value added, and sometimes giving up.
+               Oftentimes, organizations will often partially attempt a monorepo, struggle to identify the value added midway through, and give up.
                The remnants of this create a multi-monorepo setup.
             </p>
             <p>
-               I think companies attempt a multi-monorepo as a means to capture the benefits of both.
+               I think engineering organizations attempt a multi-monorepo as a means to capture the benefits of both.
                In practice, you inherit the worst parts of a monorepo and a multirepo.
                For example, in a monorepo, you need some kind of a change detection layer in your CI, to determine which services must be redeployed when a change lands.
                This is a non-issue in a multirepo, your deployments are already well-divided by repo.

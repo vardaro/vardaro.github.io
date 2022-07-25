@@ -39,7 +39,7 @@
             </p>
             <p>
                I don't think this is unique to Datadog.
-               I would guess that many companies at Datadog's size also have something that resembles a multi-monorepo.
+               I would guess that many companies at Datadog's size also have a multi-monorepo.
                It's a healthy side-effect of hypergrowth.
                Companies at this scale want to optimize developer productivity, and look toward a monorepo as a means to do so.
                A well-managed monorepo can be key to unlocking unprecedented levels of productivity in an engineering organization.
@@ -63,7 +63,7 @@
                For example, in a monorepo, you need some kind of a change detection layer in your CI, to determine which services must be redeployed when a change lands.
                This is a non-issue in a multirepo, your deployments are already well-divided by repo.
                Alternatively, in a multirepo, you need some kind way to package and synchronize shared code to downstream consumers—other repos in the service graph.
-               Likewise, this is a non-issue in a monorepo, your shared libraries and protos all live in one place.
+               Likewise, this is a non-issue in a monorepo, because your shared libraries and protos all live in one place.
                In a multi-monorepo, you have to solve both.
             </p>
             <p>

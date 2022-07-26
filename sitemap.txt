@@ -2,3 +2,4 @@ https://www.anthonyvardaro.com
 https://www.anthonyvardaro.com/blog/how-to-link-dll-gyp
 https://www.anthonyvardaro.com/blog/hermetic-python-toolchain-with-bazel
 https://www.anthonyvardaro.com/blog/writing-bazel-rules-for-interpreted-languages
+https://www.anthonyvardaro.com/blog/monorepo

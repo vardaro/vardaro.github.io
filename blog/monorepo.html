@@ -60,7 +60,7 @@
             <p>
                Some organizations deliberately attempt a multi-monorepo as a means to capture the benefits of both.
                In practice, you inherit the worst parts of a monorepo and a multirepo.
-               For example, in a monorepo, you need some kind of a change detection layer in your CI, to determine which services must be redeployed when a change lands.
+               For example, in a monorepo, you need some kind of change detection layer in your CI, to determine which services must be redeployed when a change lands.
                This is a non-issue in a multirepo, your deployments are already well-divided by repo.
                Alternatively, in a multirepo, you need some kind way to package and synchronize shared code to downstream consumers—other repos in the service graph.
                Likewise, this is a non-issue in a monorepo, because your shared libraries and protos all live in one place.
@@ -71,7 +71,7 @@
                I think Datadog does a good job at striking a balance between the two.
                That being said, the real value proposition in a repo setup is found by choosing one and committing to it, not by trying to do both.
                By choosing one, you isolate your problem space, giving you more freedom to establish common practices.
-               If you can establish common practices for software primitives (build, test, release, etc), then it ultimately doesn't matter where the underyling code lives.
+               If you can establish common practices for software primitives (build, test, release, etc), then it ultimately doesn't matter where the underlying code lives.
                Even a multi-monorepo can somewhat succeed under these conditions.
             </p>
          </div>

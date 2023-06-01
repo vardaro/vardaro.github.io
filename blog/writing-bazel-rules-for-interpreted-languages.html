@@ -329,7 +329,7 @@ py_library = rule(
                It's capturing the transitive <code>runfiles</code> objects, merging it with a local one, and passing it onward via the <code>DefaultInfo</code> provider.
                Technically this rule has no artifacts, because it doesn't register any actions. 
                Meaning if you <code>bazel build</code> a <code>py_library</code> target, nothing would happen.
-               This rule just collects and propogates information to <code>py_binary</code> (or any other downstream consumers, the rule is incredible generic).
+               This rule just collects and propogates information to <code>py_binary</code> (or any other downstream consumers, the rule is mostly generic).
                If you wanted to get fancy, you could write your own custom provider that this rule returns, allowing you to pass custom build metadata across targets.
             </p>
             <p>

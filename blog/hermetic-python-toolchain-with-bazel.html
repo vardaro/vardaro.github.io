@@ -53,7 +53,7 @@
          <div class="row">
             <h5>Concepts and Terminology</h5>
             <p>
-               If you're not familiar with Bazels toolchain ecosystem, the official documentation on <a href="https://docs.bazel.build/versions/main/toolchains.html">Toolchains</a> and <a href="https://docs.bazel.build/versions/main/platforms.html">Platforms</a> are definetly worth your time.
+               If you're not familiar with Bazel's toolchain ecosystem, the official documentation on <a href="https://docs.bazel.build/versions/main/toolchains.html">Toolchains</a> and <a href="https://docs.bazel.build/versions/main/platforms.html">Platforms</a> are definitely worth your time.
             </p>
             <p>
                A <i>platform</i> is a named collection of system constraints that describe where code is intended to run. 
@@ -77,7 +77,7 @@
             </p>
             <p>
                How does this fit together? At runtime, Bazel will identify the registered toolchains, the host platform, and the execution platform. Using the constraints described in the toolchains, and the constraints described in the platform, Bazel will attempt to select suitable toolchain pairings for the host and execution platforms.    
-               I recommend building something with the <code>--toolchain_resolution_debug=True</code> set, as it will help you conceptualize Bazels fascinating toolchain resolution process.
+               I recommend building something with the <code>--toolchain_resolution_debug=True</code> set, as it will help you conceptualize Bazel's fascinating toolchain resolution process.
             </p>
          </div>
          <div class="row">
@@ -164,7 +164,7 @@ toolchain(
             </p>
 
             <p>
-            We then take our <code>py_runtime</code> and pass it to a <code>py_runtime_pair</code> target. The <code>py_runtime_pair</code> rule is a rule for coupling a Python2 and Python3 runtime into the same toolchain. It returns a <code>ToolchainInfo</code> provider, which is an object propogated to rules that consume this toolchain. Because this is a hermetic Python3 implementation, we can pass <code>None</code> to the <code>py2_runtime</code>.
+            We then take our <code>py_runtime</code> and pass it to a <code>py_runtime_pair</code> target. The <code>py_runtime_pair</code> rule is a rule for coupling a Python2 and Python3 runtime into the same toolchain. It returns a <code>ToolchainInfo</code> provider, which is an object propagated to rules that consume this toolchain. Because this is a hermetic Python3 implementation, we can pass <code>None</code> to the <code>py2_runtime</code>.
             </p>
 
             <p>
@@ -319,7 +319,7 @@ constraints = [os_constraint, arch_constraint]
 constraints_str = ",\n        ".join(['"%s"' % c for c in constraints])
 </code></pre>
           We're taking our platform labels and generating Starlark code for a list literal. 
-          Since Starlark relies on indentation for scoping blocks of code, we need to prefix the strings with whitespace, ugh. <code>constraints_str</code> will get propogated to the <code>toolchain</code> in the build file, which will end up looking something like this.
+          Since Starlark relies on indentation for scoping blocks of code, we need to prefix the strings with whitespace, ugh. <code>constraints_str</code> will get propagated to the <code>toolchain</code> in the build file, which will end up looking something like this.
           <pre><code class="language-python"> # Generated BUILD.bazel file
 toolchain(
     name = "toolchain",
@@ -440,7 +440,7 @@ INFO: Build completed successfully, 1 total action
           </div>
           <div class="row">
             <p>
-              The learning curve for extending Bazel is steeper than tranditional build systems like Make. Learning how to write effective rules will take some time.
+              The learning curve for extending Bazel is steeper than traditional build systems like Make. Learning how to write effective rules will take some time.
               As I said earlier in the post, the implementation of this stuff tends to be very straightforward, but the surrounding concepts are complex. 
               I recommend you look around the <a href="https://github.com/vardaro/rules_py_simple">example repo</a> to help you conceptualize how everything fits together.
             </p>

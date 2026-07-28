@@ -41,7 +41,7 @@
          <div class="row">
             <p>
                I have found that eBPF is the fastest way for me to root-cause a busted <code>mount(2)</code> invocation.
-               The same method works for its modern variant, <code>fsconfig(2)</code> with <code>FSCONFIG_CMD_CREATE</code>.<sup id="ref1"><a href="#fn1">1</a></sup>
+               The same method works for its modern variant, <code>fsconfig(2)</code> with <code>FSCONFIG_CMD_CREATE</code>.<sup id="ref1">1</sup>
             </p>
             <p>
                The <code>mount(2)</code> syscall fails in weird ways. The kernel runs a fairly rigorous sequence of permission, kernel namespace, and compatibility checks before it hands superblock creation off to the underlying file system.
@@ -52,8 +52,8 @@
             </p>
             <p>
                A colleague at Netflix introduced me to the idea of using eBPF to trace the return values of interior kernel functions. Up until that point, my method was to trace the userspace-visible errno back through the kernel code by hand, which was both slow and lossy.
-               That works for errnos with clear origins (<code>ENODEV</code> is fairly clear). It's ineffective for overloaded errnos like <code>EINVAL</code>. The mount path in <code>fs/namespace.c</code> alone has over a hundred call sites that return <code>EINVAL</code>, super painful.<sup id="ref2"><a href="#fn2">2</a></sup>
-               With eBPF, we can attach kretprobes to the important VFS functions (<code>sget_fc()</code>, <code>fc_mount()</code>, etc.) and to the relevant file system creation functions (<code>do_nfs4_mount()</code>, <code>nfs4_create_server()</code>, <code>ovl_fill_super()</code>, etc.).
+               That works for errnos with clear origins (<code>ENODEV</code> is fairly clear). It's ineffective for overloaded errnos like <code>EINVAL</code>. The mount path in <code>fs/namespace.c</code> alone has close to a hundred places that return <code>EINVAL</code>, super painful.<sup id="ref2">2</sup>
+               With eBPF, we can attach kretprobes to the important VFS functions (<code>sget_fc()</code>, <code>vfs_get_tree()</code>, etc.) and to the relevant file system creation functions (<code>do_nfs4_mount()</code>, <code>nfs4_create_server()</code>, <code>ovl_fill_super()</code>, etc.).
                We can watch the syscall boundary with the <code>sys_exit_*</code> tracepoints.
                Together, these show where inside the kernel an errno was born.
             </p>
@@ -135,7 +135,7 @@ END
                This is a shortened version of <a href="https://github.com/tych0/kernel-utils/blob/dbd6021a0d8ac0af7155b00f50a80a9fe058dec1/why-did-mount-fail.bt">why-did-mount-fail.bt</a>, which is the tool I actually use, because it probes more things. I didn't author this tool, full credit goes to Tycho.
             </p>
             <p>
-               Note on the <code>(int32)</code> casts, bpftrace reads <code>retval</code> as a raw 64-bit register, so an <code>int</code> return of <code>-22</code> reads as <code>4294967274</code> and never passes a signed comparison.<sup id="ref3"><a href="#fn3">3</a></sup>
+               Note on the <code>(int32)</code> casts, bpftrace reads <code>retval</code> as a raw 64-bit register, so an <code>int</code> return of <code>-22</code> reads as <code>4294967274</code> and never passes a signed comparison.<sup id="ref3">3</sup>
             </p>
             <p>
                The deepest failing probe is usually strong evidence, sometimes it is not a definitive root cause. In some error paths, errnos are rewritten or handled on the way back up the call chain, which is why I prefer dotting the kretprobes along the call stack as opposed to isolating the lowest function.
@@ -209,7 +209,7 @@ mount            mount(tmpfs, /run/runtime/sandboxes/43/rootfs, tmpfs) = -28
                  deepest failure: kretprobe:graft_tree = -28
 </code></pre>
             <p>
-               This mount died after superblock creation, while the VFS attached it into the mount namespace, the file system had already done its part.
+               The tmpfs portion built its superblock fine. The mount died later, while the VFS attached it to the mount namespace.
                A grep for <code>ENOSPC</code> in <code>fs/namespace.c</code> lands in <code>count_mounts()</code>, which enforces <code>sysctl_mount_max</code>. You can then use <code>wc -l &lt; /proc/self/mountinfo</code> to verify the leak.
             </p>
             <p>
@@ -221,13 +221,13 @@ mount            mount(tmpfs, /run/runtime/sandboxes/43/rootfs, tmpfs) = -28
             <h5>Footnotes</h5>
             <ol>
                <li id="fn1">
-                  The simplified script only traces <code>mount(2)</code>. If your workload uses the new mount API, also watch the <code>sys_exit_fsconfig</code> and <code>sys_exit_fsmount</code> tracepoints. One note, <code>mount(8)</code> itself may use the new API depending on your util-linux version. <code>LIBMOUNT_FORCE_MOUNT2=always</code> (util-linux 2.40+) forces the classic syscall. <a href="#ref1">&#8617;</a>
+                  The simplified script only traces <code>mount(2)</code>. If your workload uses the new mount API, also watch the <code>sys_exit_fsconfig</code> and <code>sys_exit_fsmount</code> tracepoints. One note, <code>mount(8)</code> itself may use the new API depending on your util-linux version. <code>LIBMOUNT_FORCE_MOUNT2=always</code> (util-linux 2.40+) forces the classic syscall.
                </li>
                <li id="fn2">
-                  Verified super rigorously with <code>cat ./fs/namespace.c | grep "EINVAL" | wc -l</code>, which returns 110 mentions. <a href="#ref2">&#8617;</a>
+                  Verified super rigorously with <code>cat ./fs/namespace.c | grep "EINVAL" | wc -l</code>, which returns 90 mentions on v6.17 and 110 on v7.2. Not all of them are returns.
                </li>
                <li id="fn3">
-                  People hit the same thing filtering on <code>retval</code>: <a href="https://github.com/iovisor/bpftrace/issues/668">bpftrace#668</a>. <a href="#ref3">&#8617;</a>
+                  People hit the same thing filtering on <code>retval</code>: <a href="https://github.com/iovisor/bpftrace/issues/668">bpftrace#668</a>.
                </li>
             </ol>
          </div>

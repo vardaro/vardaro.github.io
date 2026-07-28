@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <!-- Basic Page Needs
+         –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+      <meta charset="utf-8" />
+      <title>Root-causing mount(2) with eBPF</title>
+      <meta name="description" content="Anthony Vardaro, Software engineer" />
+      <meta name="author" content="Anthony Vardaro" />
+      <!-- Mobile Specific Metas
+         –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
+      <!-- CSS
+         –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+      <link rel="stylesheet" href="../css/normalize.css" />
+      <link rel="stylesheet" href="../css/skeleton.css" />
+      <link rel="stylesheet" href="../css/custom.css" />
+      <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/styles/default.min.css">
+      <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/highlight.min.js"></script>
+      <script>
+         hljs.initHighlightingOnLoad();
+      </script>
+
+      <!-- Google tag (gtag.js) -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=G-6QETVFDTE2"></script>
+      <script>
+         window.dataLayer = window.dataLayer || [];
+         function gtag() { dataLayer.push(arguments); }
+         gtag('js', new Date());
+
+         gtag('config', 'G-6QETVFDTE2');
+      </script>
+
+   </head>
+   <body>
+      <div class="container blog-content">
+         <div class="row">
+            <h4 id="home-title">Root-causing mount(2) with eBPF</h4>
+            <p><a href="/">Anthony A. Vardaro</a>, Jul 2026</p>
+         </div>
+         <div class="row">
+            <p>
+               I have found that eBPF is the fastest way for me to root-cause a busted <code>mount(2)</code> invocation.
+               The same method works for its modern variant, <code>fsconfig(2)</code> with <code>FSCONFIG_CMD_CREATE</code>.<sup><a href="#fn1">1</a></sup>
+            </p>
+            <p>
+               The <code>mount(2)</code> syscall fails in weird ways.
+               The kernel runs a fairly rigorous sequence of permission, kernel namespace, and compatibility checks before it hands superblock creation off to the underlying file system.
+               Granular use of kernel namespaces, particularly <code>user_namespaces(7)</code>, <code>mount_namespaces(7)</code>, and <code>network_namespaces(7)</code>, increases the surface area for failure and makes root-causing less tractable.
+               The kernel VFS layer is only half of the pain.
+               The VFS layer finds or allocates the superblock, while the file system itself fills it.
+               Some file systems do network I/O during the mount process (nfs4, lustre), and they inherit all the failure modes that come with it.
+               Others interact weirdly with kernel namespaces late in the mount process (overlayfs, also nfs4).
+               And in containerized compute environments, <code>mount(2)</code> sits in the critical path of launching a workload, fast root-causing of this class of failure is fairly important.
+            </p>
+            <p>
+               A colleague at Netflix introduced me to the idea of using eBPF to trace the return values of interior kernel functions.
+               Up until that point, my method was to trace the userspace-visible errno back through the kernel code by hand, which was both slow and lossy.
+               That works for errnos with few possible origins (<code>ENODEV</code> is fairly clear).
+               It's ineffective for overloaded errnos like <code>EINVAL</code>.
+               The mount path in <code>fs/namespace.c</code> alone has over a hundred call sites that return <code>EINVAL</code>, super painful.<sup><a href="#fn2">2</a></sup>
+               With eBPF, we can attach kretprobes to the important VFS functions (<code>sget_fc()</code>, <code>fc_mount()</code>, etc.) and to the relevant file system creation functions (<code>do_nfs4_mount()</code>, <code>nfs4_create_server()</code>, <code>ovl_fill_super()</code>, etc.).
+               We can watch the syscall boundary with the <code>sys_exit_*</code> tracepoints.
+               Together, these show where inside the kernel an errno was born.
+            </p>
+         </div>
+         <div class="row">
+            <h5>A Simplified Trace Script</h5>
+            <p>
+               Here's an example of what I mean.
+               At syscall entry, we stash the <code>mount(2)</code> arguments.
+               In flight, kretprobes record failing return values from "interesting" kernel functions.
+               At exit, we print the arguments and the deepest failure.
+               Something to note, kretprobes unwind topologically, so the first failure represents the deepest failure.
+            </p>
+            <pre><code class="language-c">#!/usr/bin/env bpftrace
+
+tracepoint:syscalls:sys_enter_mount
+{
+	@source[tid] = str(args-&gt;dev_name);
+	@target[tid] = str(args-&gt;dir_name);
+	@fstype[tid] = str(args-&gt;type);
+	@failed[tid] = probe;
+	@err[tid] = (int64)0;
+}
+
+/*
+ * Checkpoints on "interesting" VFS kernel functions.
+ */
+kretprobe:security_sb_mount,
+kretprobe:graft_tree,
+kretprobe:ovl_fill_super
+{
+	/*
+	 * These return an int, and the upper 32 bits of the return
+	 * register are garbage, so chop them off before comparing.
+	 */
+	if (@err[tid] == 0 &amp;&amp; (int32)retval &lt; 0) {
+		@failed[tid] = probe;
+		@err[tid] = (int64)(int32)retval;
+	}
+}
+
+/* These return pointers. IS_ERR() means -4095 &lt;= retval &lt; 0. */
+kretprobe:sget_fc,
+kretprobe:fc_mount
+{
+	if (@err[tid] == 0 &amp;&amp; (int64)retval &lt; 0 &amp;&amp; (int64)retval &gt; -4096) {
+		@failed[tid] = probe;
+		@err[tid] = (int64)retval;
+	}
+}
+
+tracepoint:syscalls:sys_exit_mount
+{
+	if (args.ret &lt; 0) {
+		printf("%-16s mount(%s, %s, %s) = %d\n", comm,
+		    @source[tid], @target[tid], @fstype[tid], args.ret);
+		if (@err[tid] != 0) {
+			printf("%-16s deepest failure: %s = %d\n", "",
+			    @failed[tid], @err[tid]);
+		}
+	}
+	delete(@source[tid]);
+	delete(@target[tid]);
+	delete(@fstype[tid]);
+	delete(@failed[tid]);
+	delete(@err[tid]);
+}
+</code></pre>
+            <p>
+               This is a shortened version of <a href="https://github.com/tych0/kernel-utils/blob/dbd6021a0d8ac0af7155b00f50a80a9fe058dec1/why-did-mount-fail.bt">why-did-mount-fail.bt</a>, which is the tool I actually use, because it probes more things.
+               I didn't author this tool, full credit goes to Tycho.
+            </p>
+            <p>
+               Note on the <code>(int32)</code> casts, bpftrace reads <code>retval</code> as a raw 64-bit register, so an <code>int</code> return of <code>-22</code> reads as <code>4294967274</code> and never passes a signed comparison.<sup><a href="#fn3">3</a></sup>
+            </p>
+         </div>
+         <div class="row">
+            <h5>Examples Where This Helped</h5>
+         </div>
+         <div class="row">
+            <h6>Misplaced workdir (<code>EINVAL</code>)</h6>
+            <p>
+               As an example, let's pretend this host runs a container orchestration system that supports our company's workloads.
+               The runtime assembles each rootfs with overlayfs.
+               Someone made the reasonable-sounding decision to keep ephemeral sandbox state on <code>/run</code> (a tmpfs) and durable state on <code>/var/lib</code> (backed by a real disk).
+            </p>
+            <p>
+               The runtime makes the equivalent of this <code>mount(8)</code> call:
+            </p>
+            <pre><code class="language-shell">$ sudo mount -t overlay overlay \
+    -o lowerdir=/var/lib/runtime/images/base/rootfs,upperdir=/run/runtime/sandboxes/42/upper,workdir=/var/lib/runtime/sandboxes/42/work \
+    /run/runtime/sandboxes/42/rootfs
+mount: /run/runtime/sandboxes/42/rootfs: wrong fs type, bad option, bad superblock on overlay, missing codepage or helper program, or other error.
+       dmesg(1) may have more information after failed mount system call.
+</code></pre>
+            <pre><code class="language-shell">$ sudo strace -e trace=mount mount -t overlay overlay \
+    -o lowerdir=/var/lib/runtime/images/base/rootfs,upperdir=/run/runtime/sandboxes/42/upper,workdir=/var/lib/runtime/sandboxes/42/work \
+    /run/runtime/sandboxes/42/rootfs
+mount("overlay", "/run/runtime/sandboxes/42/rootfs", "overlay", 0, "lowerdir=/var/lib/runtime/images"...) = -1 EINVAL (Invalid argument)
+</code></pre>
+            <p>
+               Running <code>strace</code> gets you as far as <code>EINVAL</code>, but of what exactly?
+               Super confusing.
+            </p>
+            <p>
+               With our script attached:
+            </p>
+            <pre><code class="language-shell">$ sudo bpftrace trace-mount.bt
+Attaching 7 probes...
+mount            mount(overlay, /run/runtime/sandboxes/42/rootfs, overlay) = -22
+                 deepest failure: kretprobe:ovl_fill_super = -22
+</code></pre>
+            <p>
+               Failing at this level suggests the mount survived the generic VFS checks and died inside overlayfs's superblock setup.
+            </p>
+            <p>
+               Knowing the failed function, we can grep the kernel code with more precision, and land somewhere around here:
+            </p>
+            <pre><code class="language-c">// fs/overlayfs/super.c, in ovl_get_workdir()
+err = -EINVAL;
+if (upperpath-&gt;mnt != workpath-&gt;mnt) {
+	pr_err("workdir and upperdir must reside under the same mount\n");
+	return err;
+}
+</code></pre>
+            <p>
+               There's the root cause.
+               <code>upperdir</code> landed on the <code>/run</code> tmpfs, and <code>workdir</code> stayed on ext4.
+               But overlayfs needs both on the same mount, so that it can <code>rename(2)</code> between them.
+               The fix is one line in the runtime's directory layout, aligning the workdir with the upper dir.
+               A mount that fails before superblock creation even starts (bogus fstype, <code>ENODEV</code>) prints no deepest failure at all.
+               That absence is itself a clue about how far the mount got.
+            </p>
+            <p>
+               In fairness, overlayfs is polite enough to <code>pr_err()</code> that one into dmesg (and the code pointer I shared illustrates that).
+               Not everything is, though.
+               In the next example we can examine a failure that is less obvious.
+            </p>
+         </div>
+         <div class="row">
+            <h6>Mount Leak (<code>ENOSPC</code>)</h6>
+            <p>
+               The <code>fs.mount-max</code> sysctl caps the number of mounts in a mount namespace.
+               A container runtime or CSI driver that leaks mounts will eventually hit the cap on a long-running host.
+               Upon hitting this cap, the sandbox mount fails with <code>ENOSPC</code> while <code>df</code> shows half the disk free.
+               Kernel dmesg logs don't announce this, despite what <code>mount(8)</code> suggests:
+            </p>
+            <pre><code class="language-shell">$ sudo mount -t tmpfs tmpfs /run/runtime/sandboxes/43/rootfs
+mount: /run/runtime/sandboxes/43/rootfs: mount(2) system call failed: No space left on device.
+       dmesg(1) may have more information after failed mount system call.
+
+$ sudo bpftrace trace-mount.bt
+Attaching 7 probes...
+mount            mount(tmpfs, /run/runtime/sandboxes/43/rootfs, tmpfs) = -28
+                 deepest failure: kretprobe:graft_tree = -28
+</code></pre>
+            <p>
+               This mount died in the VFS before any file system was involved.
+               A grep for <code>ENOSPC</code> in <code>fs/namespace.c</code> lands in <code>count_mounts()</code>, which enforces <code>sysctl_mount_max</code>.
+               You can then use <code>findmnt | wc -l</code> to verify the leak.
+               You can mitigate this by tweaking the sysctl, and then follow up with the real fix once the root cause is understood.
+            </p>
+            <p>
+               At first glance, this class of failure is deeply unclear (and could be considered misleading).
+               The kernel reporting <code>ENOSPC</code> will point most operators to <code>du</code>/<code>df</code>, but using eBPF we can quickly isolate the real underlying failure with few distractions.
+            </p>
+         </div>
+         <div class="row footnotes">
+            <hr />
+            <p>
+               <sup id="fn1">1</sup> The simplified script below only traces <code>mount(2)</code>. If your workload uses the new mount API, also watch the <code>sys_exit_fsconfig</code> and <code>sys_exit_fsmount</code> tracepoints.
+            </p>
+            <p>
+               <sup id="fn2">2</sup> Verified super rigorously with <code>cat ./fs/namespace.c | grep "EINVAL" | wc -l</code>, which returns 110.
+            </p>
+            <p>
+               <sup id="fn3">3</sup> People hit the same thing filtering on <code>retval</code>: <a href="https://github.com/iovisor/bpftrace/issues/668">bpftrace#668</a>.
+            </p>
+         </div>
+         <!-- footer  -->
+         <div class="contact">
+            <span class="contact-link">
+            <a target="_blank" href="mailto:me@anthonyvardaro.com">Email</a>
+            </span>
+            <span class="contact-link">
+            <a target="_blank" href="https://www.linkedin.com/in/anthony-vardaro-27a070138/">LinkedIn</a>
+            </span>
+            <span class="contact-link">
+            <a href="./index.html">Blog</a>
+            </span>
+            <span class="contact-link">
+            <a href="../index.html">About</a>
+            </span>
+         </div>
+      </div>
+   </body>
+</html>

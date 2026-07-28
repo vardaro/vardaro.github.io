@@ -1,0 +1,54 @@
+#!/usr/bin/env bpftrace
+
+tracepoint:syscalls:sys_enter_mount
+{
+	@source[tid] = str(args->dev_name);
+	@target[tid] = str(args->dir_name);
+	@fstype[tid] = str(args->type);
+	@failed[tid] = probe;
+	@err[tid] = (int64)0;
+}
+
+/*
+ * Checkpoints on "interesting" VFS kernel functions.
+ */
+kretprobe:security_sb_mount,
+kretprobe:graft_tree,
+kretprobe:ovl_fill_super
+{
+	/*
+	 * These return an int, and the upper 32 bits of the return
+	 * register are garbage, so chop them off before comparing.
+	 */
+	if (@err[tid] == 0 && (int32)retval < 0) {
+		@failed[tid] = probe;
+		@err[tid] = (int64)(int32)retval;
+	}
+}
+
+/* These return pointers. IS_ERR() means -4095 <= retval < 0. */
+kretprobe:sget_fc,
+kretprobe:fc_mount
+{
+	if (@err[tid] == 0 && (int64)retval < 0 && (int64)retval > -4096) {
+		@failed[tid] = probe;
+		@err[tid] = (int64)retval;
+	}
+}
+
+tracepoint:syscalls:sys_exit_mount
+{
+	if (args.ret < 0) {
+		printf("%-16s mount(%s, %s, %s) = %d\n", comm,
+		    @source[tid], @target[tid], @fstype[tid], args.ret);
+		if (@err[tid] != 0) {
+			printf("%-16s deepest failure: %s = %d\n", "",
+			    @failed[tid], @err[tid]);
+		}
+	}
+	delete(@source[tid]);
+	delete(@target[tid]);
+	delete(@fstype[tid]);
+	delete(@failed[tid]);
+	delete(@err[tid]);
+}

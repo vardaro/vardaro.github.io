@@ -33,6 +33,16 @@ h3 {
     max-width: 620px;
 }
 
+/* Skeleton's 2.5rem default (25px) is wider than the 21px line-height,
+   so paragraphs drift apart instead of grouping. Sit just under it. */
+.blog-content p {
+    margin-bottom: 16px;
+}
+
+.blog-content pre {
+    margin-bottom: 20px;
+}
+
 .section {
     margin-top: 20px;
 }

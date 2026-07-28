@@ -41,24 +41,18 @@
          <div class="row">
             <p>
                I have found that eBPF is the fastest way for me to root-cause a busted <code>mount(2)</code> invocation.
-               The same method works for its modern variant, <code>fsconfig(2)</code> with <code>FSCONFIG_CMD_CREATE</code>.<sup><a href="#fn1">1</a></sup>
+               The same method works for its modern variant, <code>fsconfig(2)</code> with <code>FSCONFIG_CMD_CREATE</code>.<sup id="ref1"><a href="#fn1">1</a></sup>
             </p>
             <p>
-               The <code>mount(2)</code> syscall fails in weird ways.
-               The kernel runs a fairly rigorous sequence of permission, kernel namespace, and compatibility checks before it hands superblock creation off to the underlying file system.
+               The <code>mount(2)</code> syscall fails in weird ways. The kernel runs a fairly rigorous sequence of permission, kernel namespace, and compatibility checks before it hands superblock creation off to the underlying file system.
                Granular use of kernel namespaces, particularly <code>user_namespaces(7)</code>, <code>mount_namespaces(7)</code>, and <code>network_namespaces(7)</code>, increases the surface area for failure and makes root-causing less tractable.
-               The kernel VFS layer is only half of the pain.
-               The VFS layer finds or allocates the superblock, while the file system itself fills it.
-               Some file systems do network I/O during the mount process (nfs4, lustre), and they inherit all the failure modes that come with it.
-               Others interact weirdly with kernel namespaces late in the mount process (overlayfs, also nfs4).
-               And in containerized compute environments, <code>mount(2)</code> sits in the critical path of launching a workload, fast root-causing of this class of failure is fairly important.
+               A substantial portion of the mount process occurs below the kernels VFS layer, in the underlying file system.
+               Some file systems do network I/O during the mount process (nfs4, lustre), and they inherit all the failure modes that come with it. Others interact weirdly with kernel namespaces late in the mount process (overlayfs, also nfs4).
+               In containerized compute environments, <code>mount(2)</code> sits in the critical path of launching a workload, so fast root-causing of this class of failure is fairly important.
             </p>
             <p>
-               A colleague at Netflix introduced me to the idea of using eBPF to trace the return values of interior kernel functions.
-               Up until that point, my method was to trace the userspace-visible errno back through the kernel code by hand, which was both slow and lossy.
-               That works for errnos with few possible origins (<code>ENODEV</code> is fairly clear).
-               It's ineffective for overloaded errnos like <code>EINVAL</code>.
-               The mount path in <code>fs/namespace.c</code> alone has over a hundred call sites that return <code>EINVAL</code>, super painful.<sup><a href="#fn2">2</a></sup>
+               A colleague at Netflix introduced me to the idea of using eBPF to trace the return values of interior kernel functions. Up until that point, my method was to trace the userspace-visible errno back through the kernel code by hand, which was both slow and lossy.
+               That works for errnos with clear origins (<code>ENODEV</code> is fairly clear). It's ineffective for overloaded errnos like <code>EINVAL</code>. The mount path in <code>fs/namespace.c</code> alone has over a hundred call sites that return <code>EINVAL</code>, super painful.<sup id="ref2"><a href="#fn2">2</a></sup>
                With eBPF, we can attach kretprobes to the important VFS functions (<code>sget_fc()</code>, <code>fc_mount()</code>, etc.) and to the relevant file system creation functions (<code>do_nfs4_mount()</code>, <code>nfs4_create_server()</code>, <code>ovl_fill_super()</code>, etc.).
                We can watch the syscall boundary with the <code>sys_exit_*</code> tracepoints.
                Together, these show where inside the kernel an errno was born.
@@ -70,16 +64,15 @@
                Here's an example of what I mean.
                At syscall entry, we stash the <code>mount(2)</code> arguments.
                In flight, kretprobes record failing return values from "interesting" kernel functions.
-               At exit, we print the arguments and the deepest failure.
-               Something to note, kretprobes unwind topologically, so the first failure represents the deepest failure.
+               At exit, we print the arguments and the deepest failure. Something to note, kretprobes unwind topologically, so the first failure represents the deepest failure.
             </p>
             <pre><code class="language-c">#!/usr/bin/env bpftrace
 
 tracepoint:syscalls:sys_enter_mount
 {
-	@source[tid] = str(args-&gt;dev_name);
-	@target[tid] = str(args-&gt;dir_name);
-	@fstype[tid] = str(args-&gt;type);
+	@source[tid] = str(args.dev_name);
+	@target[tid] = str(args.dir_name);
+	@fstype[tid] = str(args.type);
 	@failed[tid] = probe;
 	@err[tid] = (int64)0;
 }
@@ -89,6 +82,7 @@ tracepoint:syscalls:sys_enter_mount
  */
 kretprobe:security_sb_mount,
 kretprobe:graft_tree,
+kretprobe:vfs_get_tree,
 kretprobe:ovl_fill_super
 {
 	/*
@@ -127,48 +121,55 @@ tracepoint:syscalls:sys_exit_mount
 	delete(@failed[tid]);
 	delete(@err[tid]);
 }
+
+END
+{
+	clear(@source);
+	clear(@target);
+	clear(@fstype);
+	clear(@failed);
+	clear(@err);
+}
 </code></pre>
             <p>
-               This is a shortened version of <a href="https://github.com/tych0/kernel-utils/blob/dbd6021a0d8ac0af7155b00f50a80a9fe058dec1/why-did-mount-fail.bt">why-did-mount-fail.bt</a>, which is the tool I actually use, because it probes more things.
-               I didn't author this tool, full credit goes to Tycho.
+               This is a shortened version of <a href="https://github.com/tych0/kernel-utils/blob/dbd6021a0d8ac0af7155b00f50a80a9fe058dec1/why-did-mount-fail.bt">why-did-mount-fail.bt</a>, which is the tool I actually use, because it probes more things. I didn't author this tool, full credit goes to Tycho.
             </p>
             <p>
-               Note on the <code>(int32)</code> casts, bpftrace reads <code>retval</code> as a raw 64-bit register, so an <code>int</code> return of <code>-22</code> reads as <code>4294967274</code> and never passes a signed comparison.<sup><a href="#fn3">3</a></sup>
+               Note on the <code>(int32)</code> casts, bpftrace reads <code>retval</code> as a raw 64-bit register, so an <code>int</code> return of <code>-22</code> reads as <code>4294967274</code> and never passes a signed comparison.<sup id="ref3"><a href="#fn3">3</a></sup>
+            </p>
+            <p>
+               The deepest failing probe is usually strong evidence, sometimes it is not a definitive root cause. In some error paths, errnos are rewritten or handled on the way back up the call chain, which is why I prefer dotting the kretprobes along the call stack as opposed to isolating the lowest function.
             </p>
          </div>
          <div class="row">
-            <h5>Examples Where This Helped</h5>
-         </div>
-         <div class="row">
+            <h5>Examples</h5>
             <h6>Misplaced workdir (<code>EINVAL</code>)</h6>
             <p>
-               As an example, let's pretend this host runs a container orchestration system that supports our company's workloads.
-               The runtime assembles each rootfs with overlayfs.
-               Someone made the reasonable-sounding decision to keep ephemeral sandbox state on <code>/run</code> (a tmpfs) and durable state on <code>/var/lib</code> (backed by a real disk).
+               As an example, let's pretend this host runs a container orchestration system with a hypothetical container runtime that supports our company's workloads.
+               The runtime assembles each rootfs with overlayfs, ephemeral sandbox state on <code>/run</code> (a tmpfs) and durable state on <code>/var/lib</code> (backed by a real disk).
             </p>
             <p>
                The runtime makes the equivalent of this <code>mount(8)</code> call:
             </p>
-            <pre><code class="language-shell">$ sudo mount -t overlay overlay \
+            <pre><code class="language-bash">$ sudo mount -t overlay overlay \
     -o lowerdir=/var/lib/runtime/images/base/rootfs,upperdir=/run/runtime/sandboxes/42/upper,workdir=/var/lib/runtime/sandboxes/42/work \
     /run/runtime/sandboxes/42/rootfs
 mount: /run/runtime/sandboxes/42/rootfs: wrong fs type, bad option, bad superblock on overlay, missing codepage or helper program, or other error.
        dmesg(1) may have more information after failed mount system call.
 </code></pre>
-            <pre><code class="language-shell">$ sudo strace -e trace=mount mount -t overlay overlay \
+            <pre><code class="language-bash">$ sudo strace -e trace=mount mount -t overlay overlay \
     -o lowerdir=/var/lib/runtime/images/base/rootfs,upperdir=/run/runtime/sandboxes/42/upper,workdir=/var/lib/runtime/sandboxes/42/work \
     /run/runtime/sandboxes/42/rootfs
 mount("overlay", "/run/runtime/sandboxes/42/rootfs", "overlay", 0, "lowerdir=/var/lib/runtime/images"...) = -1 EINVAL (Invalid argument)
 </code></pre>
             <p>
-               Running <code>strace</code> gets you as far as <code>EINVAL</code>, but of what exactly?
-               Super confusing.
+               Running <code>strace</code> gets you as far as <code>EINVAL</code>, but of what exactly? Super confusing.
             </p>
             <p>
                With our script attached:
             </p>
-            <pre><code class="language-shell">$ sudo bpftrace trace-mount.bt
-Attaching 7 probes...
+            <pre><code class="language-bash">$ sudo bpftrace trace-mount.bt
+Attaching 9 probes...
 mount            mount(overlay, /run/runtime/sandboxes/42/rootfs, overlay) = -22
                  deepest failure: kretprobe:ovl_fill_super = -22
 </code></pre>
@@ -178,7 +179,7 @@ mount            mount(overlay, /run/runtime/sandboxes/42/rootfs, overlay) = -22
             <p>
                Knowing the failed function, we can grep the kernel code with more precision, and land somewhere around here:
             </p>
-            <pre><code class="language-c">// fs/overlayfs/super.c, in ovl_get_workdir()
+            <pre><code class="language-c">// fs/overlayfs/super.c, in ovl_get_workdir() (as of v7.2)
 err = -EINVAL;
 if (upperpath-&gt;mnt != workpath-&gt;mnt) {
 	pr_err("workdir and upperdir must reside under the same mount\n");
@@ -186,56 +187,49 @@ if (upperpath-&gt;mnt != workpath-&gt;mnt) {
 }
 </code></pre>
             <p>
-               There's the root cause.
-               <code>upperdir</code> landed on the <code>/run</code> tmpfs, and <code>workdir</code> stayed on ext4.
-               But overlayfs needs both on the same mount, so that it can <code>rename(2)</code> between them.
+               Root cause is bad input. <code>upperdir</code> landed on the <code>/run</code> tmpfs, and <code>workdir</code> stayed on ext4. But overlayfs needs both on the same mount, so that it can <code>rename(2)</code> between them.
                The fix is one line in the runtime's directory layout, aligning the workdir with the upper dir.
             </p>
             <p>
-               In fairness, overlayfs is polite enough to <code>pr_err()</code> that one into dmesg (and the code pointer I shared illustrates that).
-               Not everything is, though.
-               In the next example we can examine a failure that is less obvious.
+               In fairness, overlayfs is polite enough to <code>pr_err()</code> that one into dmesg (and the code pointer I shared illustrates that). Not everything is, though. In the next example
+               we can examine a failure that is less obvious.
             </p>
-         </div>
-         <div class="row">
             <h6>Mount Leak (<code>ENOSPC</code>)</h6>
             <p>
-               The <code>fs.mount-max</code> sysctl caps the number of mounts in a mount namespace.
-               A container runtime or CSI driver that leaks mounts will eventually hit the cap on a long-running host.
-               Upon hitting this cap, the sandbox mount fails with <code>ENOSPC</code> while <code>df</code> shows half the disk free.
-               Kernel dmesg logs don't announce this, despite what <code>mount(8)</code> suggests:
+               The <code>fs.mount-max</code> sysctl caps the number of mounts in a mount namespace. A container runtime or CSI driver that leaks mounts will eventually hit the cap on a long-running host.
+               Upon hitting this cap, the sandbox mount fails with <code>ENOSPC</code> while <code>df</code> shows half the disk free. Kernel dmesg logs don't announce this, despite what <code>mount(8)</code> suggests:
             </p>
-            <pre><code class="language-shell">$ sudo mount -t tmpfs tmpfs /run/runtime/sandboxes/43/rootfs
+            <pre><code class="language-bash">$ sudo mount -t tmpfs tmpfs /run/runtime/sandboxes/43/rootfs
 mount: /run/runtime/sandboxes/43/rootfs: mount(2) system call failed: No space left on device.
        dmesg(1) may have more information after failed mount system call.
 
 $ sudo bpftrace trace-mount.bt
-Attaching 7 probes...
+Attaching 9 probes...
 mount            mount(tmpfs, /run/runtime/sandboxes/43/rootfs, tmpfs) = -28
                  deepest failure: kretprobe:graft_tree = -28
 </code></pre>
             <p>
-               This mount died in the VFS before any file system was involved.
-               A grep for <code>ENOSPC</code> in <code>fs/namespace.c</code> lands in <code>count_mounts()</code>, which enforces <code>sysctl_mount_max</code>.
-               You can then use <code>findmnt | wc -l</code> to verify the leak.
-               You can mitigate this by tweaking the sysctl, and then follow up with the real fix once the root cause is understood.
+               This mount died after superblock creation, while the VFS attached it into the mount namespace, the file system had already done its part.
+               A grep for <code>ENOSPC</code> in <code>fs/namespace.c</code> lands in <code>count_mounts()</code>, which enforces <code>sysctl_mount_max</code>. You can then use <code>wc -l &lt; /proc/self/mountinfo</code> to verify the leak.
             </p>
             <p>
-               At first glance, this class of failure is deeply unclear (and could be considered misleading).
-               The kernel reporting <code>ENOSPC</code> will point most operators to <code>du</code>/<code>df</code>, but using eBPF we can quickly isolate the real underlying failure with few distractions.
+               At first glance, this class of failure is deeply unclear (and could be considered misleading). The kernel reporting <code>ENOSPC</code> will point most operators to <code>du</code>/<code>df</code>, but using
+               eBPF we can quickly isolate the real underlying failure with few distractions.
             </p>
          </div>
-         <div class="row footnotes">
-            <hr />
-            <p>
-               <sup id="fn1">1</sup> The simplified script below only traces <code>mount(2)</code>. If your workload uses the new mount API, also watch the <code>sys_exit_fsconfig</code> and <code>sys_exit_fsmount</code> tracepoints.
-            </p>
-            <p>
-               <sup id="fn2">2</sup> Verified super rigorously with <code>cat ./fs/namespace.c | grep "EINVAL" | wc -l</code>, which returns 110.
-            </p>
-            <p>
-               <sup id="fn3">3</sup> People hit the same thing filtering on <code>retval</code>: <a href="https://github.com/iovisor/bpftrace/issues/668">bpftrace#668</a>.
-            </p>
+         <div class="row">
+            <h5>Footnotes</h5>
+            <ol>
+               <li id="fn1">
+                  The simplified script only traces <code>mount(2)</code>. If your workload uses the new mount API, also watch the <code>sys_exit_fsconfig</code> and <code>sys_exit_fsmount</code> tracepoints. One note, <code>mount(8)</code> itself may use the new API depending on your util-linux version. <code>LIBMOUNT_FORCE_MOUNT2=always</code> (util-linux 2.40+) forces the classic syscall. <a href="#ref1">&#8617;</a>
+               </li>
+               <li id="fn2">
+                  Verified super rigorously with <code>cat ./fs/namespace.c | grep "EINVAL" | wc -l</code>, which returns 110 mentions. <a href="#ref2">&#8617;</a>
+               </li>
+               <li id="fn3">
+                  People hit the same thing filtering on <code>retval</code>: <a href="https://github.com/iovisor/bpftrace/issues/668">bpftrace#668</a>. <a href="#ref3">&#8617;</a>
+               </li>
+            </ol>
          </div>
          <!-- footer  -->
          <div class="contact">

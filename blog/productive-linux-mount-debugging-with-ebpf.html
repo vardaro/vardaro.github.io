@@ -190,8 +190,6 @@ if (upperpath-&gt;mnt != workpath-&gt;mnt) {
                <code>upperdir</code> landed on the <code>/run</code> tmpfs, and <code>workdir</code> stayed on ext4.
                But overlayfs needs both on the same mount, so that it can <code>rename(2)</code> between them.
                The fix is one line in the runtime's directory layout, aligning the workdir with the upper dir.
-               A mount that fails before superblock creation even starts (bogus fstype, <code>ENODEV</code>) prints no deepest failure at all.
-               That absence is itself a clue about how far the mount got.
             </p>
             <p>
                In fairness, overlayfs is polite enough to <code>pr_err()</code> that one into dmesg (and the code pointer I shared illustrates that).

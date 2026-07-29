@@ -46,7 +46,7 @@
             <p>
                The <code>mount(2)</code> syscall fails in weird ways. The kernel runs a fairly rigorous sequence of permission, kernel namespace, and compatibility checks before it hands superblock creation off to the underlying file system.
                Granular use of kernel namespaces, particularly <code>user_namespaces(7)</code>, <code>mount_namespaces(7)</code>, and <code>network_namespaces(7)</code>, increases the surface area for failure and makes root-causing less tractable.
-               A substantial portion of the mount process occurs below the kernels VFS layer, in the underlying file system.
+               A substantial portion of the mount process occurs below the kernel's VFS layer, in the underlying file system.
                Some file systems do network I/O during the mount process (nfs4, lustre), and they inherit all the failure modes that come with it. Others interact weirdly with kernel namespaces late in the mount process (overlayfs, also nfs4).
                In containerized compute environments, <code>mount(2)</code> sits in the critical path of launching a workload, so fast root-causing of this class of failure is fairly important.
             </p>
@@ -64,7 +64,15 @@
                Here's an example of what I mean.
                At syscall entry, we stash the <code>mount(2)</code> arguments.
                In flight, kretprobes record failing return values from "interesting" kernel functions.
-               At exit, we print the arguments and the deepest failure. Something to note, kretprobes unwind topologically, so the first failure represents the deepest failure.
+               At exit, we print the arguments and the deepest failure. Something to note, kretprobes fire in return order, and the deepest function returns first, so the first failure we print is the deepest one.
+            </p>
+            <p>
+               The probes are checkpoints in the <code>mount(2)</code> pipeline, which for a new mount looks like this.
+               <code>path_mount()</code> runs the LSM hook (<code>security_sb_mount()</code>) and checks that the caller is capable in its mount namespace.
+               <code>do_new_mount()</code> resolves the file system type and builds an <code>fs_context</code>.
+               <code>vfs_get_tree()</code> creates the superblock, <code>sget_fc()</code> finds-or-allocates it, and the file system fills it (this is where something like <code>ovl_fill_super()</code> in overlayfs would live).
+               Finally, <code>graft_tree()</code> attaches the finished mount into the namespace tree.
+               There's more complexity available, but for my purposes I've found this is the appropriate level of depth relevant to productively debug this stuff, since these points constitute what I consider to be the common failure culprits.
             </p>
             <pre><code class="language-c">#!/usr/bin/env bpftrace
 
@@ -139,6 +147,10 @@ END
             </p>
             <p>
                The deepest failing probe is usually strong evidence, sometimes it is not a definitive root cause. In some error paths, errnos are rewritten or handled on the way back up the call chain, which is why I prefer dotting the kretprobes along the call stack as opposed to isolating the lowest function.
+            </p>
+            <p>
+               This is safe to leave attached to a busy production host. Although, I tend to run this ad-hoc rather than leaving it always-on.
+               The probes only fire on mount activity, which is relatively rare, and a kprobe hit costs on the order of a microsecond, not enough to make a meaningful dent in workload launch latency.
             </p>
          </div>
          <div class="row">
@@ -224,7 +236,7 @@ mount            mount(tmpfs, /run/runtime/sandboxes/43/rootfs, tmpfs) = -28
                   The simplified script only traces <code>mount(2)</code>. If your workload uses the new mount API, also watch the <code>sys_exit_fsconfig</code> and <code>sys_exit_fsmount</code> tracepoints. One note, <code>mount(8)</code> itself may use the new API depending on your util-linux version. <code>LIBMOUNT_FORCE_MOUNT2=always</code> (util-linux 2.40+) forces the classic syscall.
                </li>
                <li id="fn2">
-                  Verified super rigorously with <code>cat ./fs/namespace.c | grep "EINVAL" | wc -l</code>, which returns 90 mentions on v6.17 and 110 on v7.2. Not all of them are returns.
+                  Verified super rigorously with <code>cat ./fs/namespace.c | grep "EINVAL" | wc -l</code>, which returns 90 mentions on v6.17.
                </li>
                <li id="fn3">
                   People hit the same thing filtering on <code>retval</code>: <a href="https://github.com/iovisor/bpftrace/issues/668">bpftrace#668</a>.
